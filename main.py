@@ -4,14 +4,120 @@
 import kagglehub
 import pandas as pd
 import pandasql
+import matplotlib.pyplot as plt
 import os
 import seaborn as sns
+import re
+from thefuzz import process
+
+
+def normalize_country(name: str) -> str:
+    if pd.isna(name):
+        return None
+    name = name.lower().strip()
+    name = name.replace("&", "and")
+    name = re.sub(r"[^a-z\s]", "", name)   # remove punctuation
+    name = re.sub(r"\s+", " ", name)       # collapse spaces
+    return name.strip()
+
+country_aliases = {
+    "usa": "united states",
+    "us": "united states",
+    "uk": "united kingdom",
+    "south korea": "korea republic of",
+    "north korea": "korea democratic peoples republic of",
+    "russia": "russian federation",
+    "venezuela": "venezuela bolivarian republic of",
+    "czechia": "czech republic",
+    "ivory coast": "cote divoire",
+    "antigua": "antigua and barbuda",
+}
+
+def apply_alias(name):
+    return country_aliases.get(name, name)
+
+def fuzzy_merge(df_left,
+                df_right,
+                left_on='Country_clean',
+                right_on='Country_clean',
+                right_cols=None,
+                threshold=90,
+                return_matches=False):
+    """
+    Fuzzy-merge df_right into df_left.
+    - right_cols: list of columns from df_right to bring in (excluding right_on). If None, bring all except right_on.
+    - threshold: minimum similarity score to accept a match (0-100).
+    - return_matches: if True, also returns the mapping dict (left_value -> matched_right_value or None).
+    """
+    if left_on not in df_left.columns:
+        raise KeyError(f"left_on '{left_on}' not found in left dataframe")
+    if right_on not in df_right.columns:
+        raise KeyError(f"right_on '{right_on}' not found in right dataframe")
+
+    # prepare right columns to merge
+    if right_cols is None:
+        right_cols = [c for c in df_right.columns if c != right_on]
+    else:
+        right_cols = [c for c in right_cols if c != right_on]
+
+    # unique right keys to match against
+    right_keys = df_right[right_on].dropna().astype(str).unique().tolist()
+
+    # build mapping from left values -> best right key (or None)
+    mapping = {}
+    left_vals = df_left[left_on].dropna().astype(str).unique().tolist()
+    for val in left_vals:
+        match = process.extractOne(val, right_keys)
+        if match is None:
+            mapping[val] = None
+        else:
+            best, score = match
+            mapping[val] = best if score >= threshold else None
+
+    # apply mapping to create helper key column
+    left = df_left.copy()
+    left['_fuzzy_key'] = left[left_on].astype(str).map(mapping)
+
+    # prepare right subset (one row per right_on)
+    right_subset = df_right[[right_on] + right_cols].copy()
+    right_subset = right_subset.drop_duplicates(subset=right_on)
+
+    # merge on helper key -> right_on
+    merged = pd.merge(left, right_subset, left_on='_fuzzy_key', right_on=right_on, how='left', suffixes=('', '_r'))
+
+    # For any columns that exist in both df_left and df_right, prefer df_left values and fill missing with right
+    for col in right_cols:
+        right_col_r = col + '_r'
+        if col in df_left.columns:
+            # If left has column, fillna from right and drop helper
+            if right_col_r in merged.columns:
+                merged[col] = merged[col].fillna(merged[right_col_r])
+                merged.drop(columns=[right_col_r], inplace=True, errors='ignore')
+        else:
+            # left doesn't have column: rename the imported right_col_r to col (or keep col if no suffix)
+            if col in merged.columns and right_col_r in merged.columns:
+                # unlikely but handle by filling then dropping suffix
+                merged[col] = merged[col].fillna(merged[right_col_r])
+                merged.drop(columns=[right_col_r], inplace=True, errors='ignore')
+            elif right_col_r in merged.columns:
+                merged.rename(columns={right_col_r: col}, inplace=True)
+
+    # cleanup helper and duplicate country columns
+    merged.drop(
+        columns=['_fuzzy_key'] + [c for c in merged.columns if c.startswith('Country_clean_r')],
+        inplace=True,
+        errors='ignore'
+    )
+
+    if return_matches:
+        return merged, mapping
+    return merged
 
 # download happiness + lots of other tables | store the csvs to not re-download data 
 def download_datasets():
     data_dir = "datasets"
     os.makedirs(data_dir, exist_ok=True)
-    downloaded_datasets = []
+    downloaded_datasets = {}
 
     # World Happiness
     happiness_download_path = kagglehub.dataset_download("jainaru/world-happiness-report-2024-yearly-updated")
@@ -19,10 +125,12 @@ def download_datasets():
     if not os.path.exists(happiness_local_path):
         happiness_df = pd.read_csv(f"{happiness_download_path}/World-happiness-report-2024.csv")
         happiness_df.to_csv(happiness_local_path, index=False)
-        downloaded_datasets.append(happiness_df)
+        happiness_df["Country_clean"] = happiness_df["Country name"].map(normalize_country).map(apply_alias)
+        downloaded_datasets['happiness_df'] = happiness_df
     else:
         happiness_df = pd.read_csv(f"{happiness_local_path}")
-        downloaded_datasets.append(happiness_df)
+        happiness_df["Country_clean"] = happiness_df["Country name"].map(normalize_country).map(apply_alias)
+        downloaded_datasets['happiness_df'] = happiness_df
 
     # Average Wage
     average_wage_download_path = kagglehub.dataset_download("kabhishm/countries-by-average-wage")
@@ -30,10 +138,10 @@ def download_datasets():
     if not os.path.exists(average_wage_local_path):
         average_wage_df = pd.read_csv(f"{average_wage_download_path}/avg_wage.csv")
         average_wage_df.to_csv(average_wage_local_path, index=False)
-        downloaded_datasets.append(average_wage_df)
+        downloaded_datasets['average_wage_df'] = average_wage_df
     else:
         average_wage_df = pd.read_csv(f"{average_wage_local_path}")
-        downloaded_datasets.append(average_wage_df)
+        downloaded_datasets['average_wage_df'] = average_wage_df
 
     # IQ Air
     iq_air_download_path = kagglehub.dataset_download("ramjasmaurya/most-polluted-cities-and-countries-iqair-index")
@@ -41,10 +149,10 @@ def download_datasets():
     if not os.path.exists(iq_air_local_path):
         iq_air_df = pd.read_csv(f"{iq_air_download_path}/AIR QUALITY INDEX (by cities) - IQAir.csv")
         iq_air_df.to_csv(iq_air_local_path, index=False)
-        downloaded_datasets.append(iq_air_df)
+        downloaded_datasets['iq_air_df'] = iq_air_df
     else:
         iq_air_df = pd.read_csv(f"{iq_air_local_path}")
-        downloaded_datasets.append(iq_air_df)
+        downloaded_datasets['iq_air_df'] = iq_air_df
 
     # Lifespan
     lifespan_download_path = kagglehub.dataset_download("amirhosseinmirzaie/countries-life-expectancy")
@@ -52,10 +160,10 @@ def download_datasets():
     if not os.path.exists(lifespan_local_path):
         lifespan_df = pd.read_csv(f"{lifespan_download_path}/life_expectancy.csv")
         lifespan_df.to_csv(lifespan_local_path, index=False)
-        downloaded_datasets.append(lifespan_df)
+        downloaded_datasets['lifespan_df'] = lifespan_df
     else:
         lifespan_df = pd.read_csv(f"{lifespan_local_path}")
-        downloaded_datasets.append(lifespan_df)
+        downloaded_datasets['lifespan_df'] = lifespan_df
 
     # Netflix
     netflix_download_path = kagglehub.dataset_download("prasertk/netflix-subscription-price-in-different-countries")
@@ -63,10 +171,10 @@ def download_datasets():
     if not os.path.exists(netflix_local_path):
         netflix_data_df = pd.read_csv(f"{netflix_download_path}/Netflix subscription fee Dec-2021.csv")
         netflix_data_df.to_csv(netflix_local_path, index=False)
-        downloaded_datasets.append(netflix_data_df)
+        downloaded_datasets['netflix_data_df'] = netflix_data_df
     else:
         netflix_data_df = pd.read_csv(f"{netflix_local_path}")
-        downloaded_datasets.append(netflix_data_df)
+        downloaded_datasets['netflix_data_df'] = netflix_data_df
 
     # Women Safety
     women_safety_download_path = kagglehub.dataset_download("arpitsinghaiml/most-dangerous-countries-for-women-2024")
@@ -74,10 +182,10 @@ def download_datasets():
     if not os.path.exists(women_safety_local_path):
         women_safety_df = pd.read_csv(f"{women_safety_download_path}/most-dangerous-countries-for-women-2024.csv")
         women_safety_df.to_csv(women_safety_local_path, index=False)
-        downloaded_datasets.append(women_safety_df)
+        downloaded_datasets['women_safety_df'] = women_safety_df
     else:
         women_safety_df = pd.read_csv(f"{women_safety_local_path}")
-        downloaded_datasets.append(women_safety_df)
+        downloaded_datasets['women_safety_df'] = women_safety_df
 
     # Temperature
     temperature_download_path = kagglehub.dataset_download("samithsachidanandan/average-monthly-surface-temperature-1940-2024")
@@ -85,10 +193,10 @@ def download_datasets():
     if not os.path.exists(temperature_local_path):
         temperature_df = pd.read_csv(f"{temperature_download_path}/average-monthly-surface-temperature.csv")
         temperature_df.to_csv(temperature_local_path, index=False)
-        downloaded_datasets.append(temperature_df)
+        downloaded_datasets['temperature_df'] = temperature_df
     else:
         temperature_df = pd.read_csv(f"{temperature_local_path}")
-        downloaded_datasets.append(temperature_df)
+        downloaded_datasets['temperature_df'] = temperature_df
 
     # Population
     population_download_path = kagglehub.dataset_download("iamsouravbanerjee/world-population-dataset")
@@ -96,10 +204,10 @@ def download_datasets():
     if not os.path.exists(population_local_path):
         population_df = pd.read_csv(f"{population_download_path}/world_population.csv")
         population_df.to_csv(population_local_path, index=False)
-        downloaded_datasets.append(population_df)
+        downloaded_datasets['population_df'] = population_df
     else:
         population_df = pd.read_csv(f"{population_local_path}")
-        downloaded_datasets.append(population_df)
+        downloaded_datasets['population_df'] = population_df
 
     # Energy Consumption
     energy_consumption_download_path = kagglehub.dataset_download("pralabhpoudel/world-energy-consumption")
@@ -107,10 +215,10 @@ def download_datasets():
     if not os.path.exists(energy_consumption_local_path):
         energy_consumption_df = pd.read_csv(f"{energy_consumption_download_path}/World Energy Consumption.csv")
         energy_consumption_df.to_csv(energy_consumption_local_path, index=False)
-        downloaded_datasets.append(energy_consumption_df)
+        downloaded_datasets['energy_consumption_df'] = energy_consumption_df
     else:
         energy_consumption_df = pd.read_csv(f"{energy_consumption_local_path}")
-        downloaded_datasets.append(energy_consumption_df)
+        downloaded_datasets['energy_consumption_df'] = energy_consumption_df
 
     # World Bank Development
     world_bank_download_path = kagglehub.dataset_download("nicolasgonzalezmunoz/world-bank-world-development-indicators")
@@ -118,10 +226,10 @@ def download_datasets():
     if not os.path.exists(world_bank_local_path):
         world_bank_development_df = pd.read_csv(f"{world_bank_download_path}/world_bank_development_indicators.csv")
         world_bank_development_df.to_csv(world_bank_local_path, index=False)
-        downloaded_datasets.append(world_bank_development_df)
+        downloaded_datasets['world_bank_development_df'] = world_bank_development_df
     else:
         world_bank_development_df = pd.read_csv(f"{world_bank_local_path}")
-        downloaded_datasets.append(world_bank_development_df)
+        downloaded_datasets['world_bank_development_df'] = world_bank_development_df
 
     # Food Production
     food_production_download_path = kagglehub.dataset_download("rafsunahmad/world-food-production")
@@ -129,10 +237,10 @@ def download_datasets():
     if not os.path.exists(food_production_local_path):
         food_production_df = pd.read_csv(f"{food_production_download_path}/world food production.csv")
         food_production_df.to_csv(food_production_local_path, index=False)
-        downloaded_datasets.append(food_production_df)
+        downloaded_datasets['food_production_df'] = food_production_df
     else:
         food_production_df = pd.read_csv(f"{food_production_local_path}")
-        downloaded_datasets.append(food_production_df)
+        downloaded_datasets['food_production_df'] = food_production_df
 
     # Petrol Prices
     petrol_prices_download_path = kagglehub.dataset_download("zusmani/petrolgas-prices-worldwide")
@@ -140,10 +248,10 @@ def download_datasets():
     if not os.path.exists(petrol_prices_local_path):
         petrol_prices_df = pd.read_csv(f"{petrol_prices_download_path}/Petrol Dataset June 20 2022.csv", encoding='latin1')
         petrol_prices_df.to_csv(petrol_prices_local_path, index=False)
-        downloaded_datasets.append(petrol_prices_df)
+        downloaded_datasets['petrol_prices_df'] = petrol_prices_df
     else:
         petrol_prices_df = pd.read_csv(f"{petrol_prices_local_path}")
-        downloaded_datasets.append(petrol_prices_df)
+        downloaded_datasets['petrol_prices_df'] = petrol_prices_df
 
     # CO2 Emissions
     co2_emissions_download_path = kagglehub.dataset_download("koustavghosh149/co2-emission-around-the-world")
@@ -151,52 +259,152 @@ def download_datasets():
     if not os.path.exists(co2_emissions_local_path):
         co2_emissions_df = pd.read_csv(f"{co2_emissions_download_path}/CO2_emission.csv")
         co2_emissions_df.to_csv(co2_emissions_local_path, index=False)
-        downloaded_datasets.append(co2_emissions_df)
+        downloaded_datasets['co2_emissions_df'] = co2_emissions_df
     else:
         co2_emissions_df = pd.read_csv(f"{co2_emissions_local_path}")
-        downloaded_datasets.append(co2_emissions_df)
+        downloaded_datasets['co2_emissions_df'] = co2_emissions_df
 
     # Return all dataframes
     return downloaded_datasets
 
 # checks for csvs and re-download data if csvs are not available
 data = download_datasets()
-happiness_df = data.happiness_df.rename(columns={"Country name": "Country"})
+happiness_df = data['happiness_df'][['Country name', 'Country_clean', 'Regional indicator', 'Ladder score']].rename(columns={"Country name": "Country", "Regional indicator" : "Region", "Ladder score" : "Happiness"})
 
 # isolate the country name + column that I need from supporting datasets
 # rename the column
 # then clean each one
 # then merge each one into happiness_df
 
-# 1) Average Wage
-average_wage_isolated_df = data.average_wage_df[['Country', '2020']]
-average_wage_isolated_df = average_wage_isolated_df.rename(columns={'2020': 'Average_Wage'})
+# 1) Average Wage - simple [but mind not full matches, also count them]
+average_wage_isolated_df = data['average_wage_df'][['Country', '2020']]
+average_wage_isolated_df = average_wage_isolated_df.rename(columns={'2020': 'Average Wage (USD/year)'})
 average_wage_isolated_df = average_wage_isolated_df.dropna().drop_duplicates()
 average_wage_isolated_df['Country'] = average_wage_isolated_df['Country'].str.strip()
-average_wage_isolated_df['Average_Wage'] = pd.to_numeric(average_wage_isolated_df['Average_Wage'], errors='coerce')
-happiness_df = pd.merge(happiness_df, average_wage_isolated_df, on="Country", how="left")
+average_wage_isolated_df['Average Wage (USD/year)'] = pd.to_numeric(average_wage_isolated_df['Average Wage (USD/year)'], errors='coerce')
+average_wage_isolated_df["Country_clean"] = average_wage_isolated_df["Country"].map(normalize_country).map(apply_alias)
+happiness_df = fuzzy_merge(
+    happiness_df,
+    average_wage_isolated_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['Average Wage (USD/year)'],
+    threshold=85
+)
 
-# 2) IQ Air
+# # 2) IQ Air - need to sort cities into countries
 
-# 3) Lifespan
+# 3) Lifespan - need to only grab rows with the latest year
 
-# 4) Netflix
+# 4) Netflix - simple
+netflix_isolated_df = data['netflix_data_df'][['Country', 'Cost Per Month - Standard ($)']]
+netflix_isolated_df = netflix_isolated_df.rename(columns={'Cost Per Month - Standard ($)': 'Netflix (USD/month)'})
+netflix_isolated_df = netflix_isolated_df.dropna().drop_duplicates()
+netflix_isolated_df['Country'] = netflix_isolated_df['Country'].str.strip()
+netflix_isolated_df['Netflix (USD/month)'] = pd.to_numeric(netflix_isolated_df['Netflix (USD/month)'], errors='coerce')
+netflix_isolated_df["Country_clean"] = netflix_isolated_df["Country"].map(normalize_country).map(apply_alias)
+happiness_df = fuzzy_merge(
+    happiness_df,
+    netflix_isolated_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['Netflix (USD/month)'],
+    threshold=85
+)
 
-# 5) Temperature
+# 5) Women's Safety - simple
+women_safety_isolated_df = data['women_safety_df'][['country', 'MostDangerousCountriesForWomen_WomenPeaceAndSecurityIndex_Score_2023']]
+women_safety_isolated_df = women_safety_isolated_df.rename(columns={'country' : 'Country', 'MostDangerousCountriesForWomen_WomenPeaceAndSecurityIndex_Score_2023': 'Women Safety Index'})
+women_safety_isolated_df = women_safety_isolated_df.dropna().drop_duplicates()
+women_safety_isolated_df['Country'] = women_safety_isolated_df['Country'].str.strip()
+women_safety_isolated_df['Women Safety Index'] = pd.to_numeric(women_safety_isolated_df['Women Safety Index'], errors='coerce')
+women_safety_isolated_df["Country_clean"] = women_safety_isolated_df["Country"].map(normalize_country).map(apply_alias)
+happiness_df = fuzzy_merge(
+    happiness_df,
+    women_safety_isolated_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['Women Safety Index'],
+    threshold=85
+)
 
-# 6) Population
+# 6) Temperature - need to only grab rows with the latest year
 
-# 7) Energy Consumption
+# 7) Population - simple
+population_isolated_df = data['population_df'][['Country/Territory', '2022 Population']]
+population_isolated_df = population_isolated_df.rename(columns={'Country/Territory' : 'Country', '2022 Population': 'Population'})
+population_isolated_df = population_isolated_df.dropna().drop_duplicates()
+population_isolated_df['Country'] = population_isolated_df['Country'].str.strip()
+population_isolated_df['Population'] = pd.to_numeric(population_isolated_df['Population'], errors='coerce')
+population_isolated_df["Country_clean"] = population_isolated_df["Country"].map(normalize_country).map(apply_alias)
+happiness_df = fuzzy_merge(
+    happiness_df,
+    population_isolated_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['Population'],
+    threshold=85
+)
 
-# 8) World Bank Development
+# 8) Energy Consumption - need to only grab rows with the latest year
 
-# 9) Food Production
+# 9) World Bank Development - need to only grab rows with the latest year
 
-# 10) Petrol Prices
+# 10) Food Production - need to only grab rows with the latest year
 
-# 11) CO2 Emissions
+# 11) Petrol Prices - simple
+petrol_prices_isolated_df = data['petrol_prices_df'][['Country', 'Daily Oil Consumption (Barrels)', 'Price Per Liter (USD)']]
+petrol_prices_isolated_df = petrol_prices_isolated_df.rename(columns={'Price Per Liter (USD)' : 'Petrol (USD/liter)'})
+petrol_prices_isolated_df = petrol_prices_isolated_df.dropna().drop_duplicates()
+petrol_prices_isolated_df['Country'] = petrol_prices_isolated_df['Country'].str.strip()
+petrol_prices_isolated_df['Daily Oil Consumption (Barrels)'] = pd.to_numeric(petrol_prices_isolated_df['Daily Oil Consumption (Barrels)'], errors='coerce')
+petrol_prices_isolated_df['Petrol (USD/liter)'] = pd.to_numeric(petrol_prices_isolated_df['Petrol (USD/liter)'], errors='coerce')
+petrol_prices_isolated_df["Country_clean"] = petrol_prices_isolated_df["Country"].map(normalize_country).map(apply_alias)
+happiness_df = fuzzy_merge(
+    happiness_df,
+    petrol_prices_isolated_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['Petrol (USD/liter)', 'Daily Oil Consumption (Barrels)'],
+    threshold=85
+)
+
+# 12) CO2 Emissions - simple
+co2_emissions_isolated_df = data['co2_emissions_df'][['Country Name', '2019']]
+co2_emissions_isolated_df = co2_emissions_isolated_df.rename(columns={'Country Name': 'Country', '2019' : 'CO2 Emissions (ton per capita)'})
+co2_emissions_isolated_df = co2_emissions_isolated_df.dropna().drop_duplicates()
+co2_emissions_isolated_df['Country'] = co2_emissions_isolated_df['Country'].str.strip()
+co2_emissions_isolated_df['CO2 Emissions (ton per capita)'] = pd.to_numeric(co2_emissions_isolated_df['CO2 Emissions (ton per capita)'], errors='coerce')
+co2_emissions_isolated_df["Country_clean"] = co2_emissions_isolated_df["Country"].map(normalize_country).map(apply_alias)
+happiness_df = fuzzy_merge(
+    happiness_df,
+    co2_emissions_isolated_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['CO2 Emissions (ton per capita)'],
+    threshold=85
+)
 
 # use AI to find which metrics correlate to happiness and which don't
 
+# only keep numeric columns
+numeric_cols = happiness_df.select_dtypes(include='number')
+
+# correlation matrix
+corr_matrix = numeric_cols.corr()
+
+# focus on correlation with Happiness
+happiness_corr = corr_matrix['Happiness'].sort_values(ascending=False)
+
+print("Correlation of each metric with Happiness:\n")
+print(happiness_corr)
+
+# visualize
+plt.figure(figsize=(8,6))
+happiness_corr.drop('Happiness').plot(kind='barh')
+plt.title("Correlation with Happiness")
+plt.xlabel("Correlation Coefficient")
+plt.subplots_adjust(left=0.35) # add padding to the left so labels don’t get cut off
+plt.show()
 
 # add more tables / metrics for more opportunities to find correlations
