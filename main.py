@@ -154,16 +154,16 @@ def download_datasets():
         iq_air_df = pd.read_csv(f"{iq_air_local_path}")
         downloaded_datasets['iq_air_df'] = iq_air_df
 
-    # Lifespan
-    lifespan_download_path = kagglehub.dataset_download("amirhosseinmirzaie/countries-life-expectancy")
-    lifespan_local_path = os.path.join(data_dir, "life_expectancy.csv")
-    if not os.path.exists(lifespan_local_path):
-        lifespan_df = pd.read_csv(f"{lifespan_download_path}/life_expectancy.csv")
-        lifespan_df.to_csv(lifespan_local_path, index=False)
-        downloaded_datasets['lifespan_df'] = lifespan_df
+    # Life Expectancy
+    life_expectancy_download_path = kagglehub.dataset_download("amirhosseinmirzaie/countries-life-expectancy")
+    life_expectancy_local_path = os.path.join(data_dir, "life_expectancy.csv")
+    if not os.path.exists(life_expectancy_local_path):
+        life_expectancy_df = pd.read_csv(f"{life_expectancy_download_path}/life_expectancy.csv")
+        life_expectancy_df.to_csv(life_expectancy_local_path, index=False)
+        downloaded_datasets['life_expectancy_df'] = life_expectancy_df
     else:
-        lifespan_df = pd.read_csv(f"{lifespan_local_path}")
-        downloaded_datasets['lifespan_df'] = lifespan_df
+        life_expectancy_df = pd.read_csv(f"{life_expectancy_local_path}")
+        downloaded_datasets['life_expectancy_df'] = life_expectancy_df
 
     # Netflix
     netflix_download_path = kagglehub.dataset_download("prasertk/netflix-subscription-price-in-different-countries")
@@ -277,7 +277,8 @@ happiness_df = data['happiness_df'][['Country name', 'Country_clean', 'Regional 
 # then merge each one into happiness_df
 
 # 1) Average Wage - simple [but mind not full matches, also count them]
-average_wage_isolated_df = data['average_wage_df'][['Country', '2020']]
+average_wage_isolated_df = data['average_wage_df'][['Country', '2020']] 
+# Note for above: DOUBLE SQUARE BRACKETS!!! 1st brackets are the INDEX selector, 2nd brackets are the LIST of columns we pass
 average_wage_isolated_df = average_wage_isolated_df.rename(columns={'2020': 'Average Wage (USD/year)'})
 average_wage_isolated_df = average_wage_isolated_df.dropna().drop_duplicates()
 average_wage_isolated_df['Country'] = average_wage_isolated_df['Country'].str.strip()
@@ -295,6 +296,25 @@ happiness_df = fuzzy_merge(
 # # 2) IQ Air - need to sort cities into countries
 
 # 3) Lifespan - need to only grab rows with the latest year
+life_expectancy_isolated_df = data['life_expectancy_df'][['Country', 'Year', 'infant deaths', 'Alcohol', 'Life expectancy']]
+life_expectancy_isolated_df = life_expectancy_isolated_df.rename(columns={'infant deaths': "Infant Death Rate", 'Alcohol': 'Alcohol Consumption Rate', 'Life expectancy' : 'Life Expectancy'})
+life_expectancy_isolated_df = life_expectancy_isolated_df.dropna().drop_duplicates()
+life_expectancy_isolated_df['Country'] = life_expectancy_isolated_df['Country'].str.strip()
+life_expectancy_isolated_df['Infant Death Rate'] = pd.to_numeric(life_expectancy_isolated_df['Infant Death Rate'], errors='coerce')
+life_expectancy_isolated_df['Infant Survival Rate'] = 1000 - life_expectancy_isolated_df['Infant Death Rate'] 
+# Note for above: PD applies things ELEMENT-WIDE!!! so: every row in gets transformed into "survival rate" as 1000 - value.
+life_expectancy_isolated_df['Alcohol Consumption Rate'] = pd.to_numeric(life_expectancy_isolated_df['Alcohol Consumption Rate'], errors='coerce')
+life_expectancy_isolated_df['Life Expectancy'] = pd.to_numeric(life_expectancy_isolated_df['Life Expectancy'], errors='coerce')
+life_expectancy_isolated_df = life_expectancy_isolated_df[life_expectancy_isolated_df["Year"] == 2015]
+life_expectancy_isolated_df["Country_clean"] = life_expectancy_isolated_df["Country"].map(normalize_country).map(apply_alias)
+happiness_df = fuzzy_merge(
+    happiness_df,
+    life_expectancy_isolated_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['Infant Survival Rate', 'Alcohol Consumption Rate', 'Life Expectancy'],
+    threshold=85
+)
 
 # 4) Netflix - simple
 netflix_isolated_df = data['netflix_data_df'][['Country', 'Cost Per Month - Standard ($)']]
@@ -329,6 +349,38 @@ happiness_df = fuzzy_merge(
 )
 
 # 6) Temperature - need to only grab rows with the latest year
+temperature_isolated_df = data['temperature_df'][['Entity', 'Day', 'year', 'Average surface temperature']]
+temperature_isolated_df = temperature_isolated_df.rename(
+    columns={'Entity': 'Country', 'Average surface temperature': 'Average Temperature'}
+)
+temperature_isolated_df = temperature_isolated_df[pd.to_datetime(temperature_isolated_df['Day']).dt.month.isin([1, 12])]
+temperature_isolated_df = temperature_isolated_df[temperature_isolated_df["year"] == 2024]
+# Need to turn this:
+# Argentine 2024-01-15 2024 +20
+# Argentine 2024-12-15 2024 +10
+# Into this:
+# Argentine +20 (column 'average summer temp') +15 (column 'average winter temp') <--- sort the higher one into summer, the lower into winter
+jan_df = temperature_isolated_df[pd.to_datetime(temperature_isolated_df['Day']).dt.month == 1] # Separate January and December
+dec_df = temperature_isolated_df[pd.to_datetime(temperature_isolated_df['Day']).dt.month == 12] 
+merged_df = jan_df.merge(dec_df, on=['Country', 'year'], suffixes=('_Jan', '_Dec')) # Merge January and December rows by Country and Year
+merged_df['Average Summer Temperature'] = merged_df[['Average Temperature_Jan', 'Average Temperature_Dec']].max(axis=1) # Create Summer and Winter columns
+merged_df['Average Winter Temperature'] = merged_df[['Average Temperature_Jan', 'Average Temperature_Dec']].min(axis=1)
+temperature_isolated_df = merged_df[['Country', 'Average Summer Temperature', 'Average Winter Temperature']] # Keep only the relevant columns
+temperature_isolated_df.loc[:, 'Country'] = temperature_isolated_df['Country'].str.strip()
+temperature_isolated_df.loc[:, 'Average Summer Temperature'] = pd.to_numeric(temperature_isolated_df['Average Summer Temperature'], errors='coerce')
+temperature_isolated_df.loc[:, 'Average Winter Temperature'] = pd.to_numeric(temperature_isolated_df['Average Winter Temperature'], errors='coerce')
+temperature_isolated_df = temperature_isolated_df.copy()
+# Not on the above: some DFs are not independent!!! they don't have data, just pointers to the original. copy and use .loc to not alter the original and make them independent
+temperature_isolated_df["Country_clean"] = temperature_isolated_df["Country"].map(normalize_country).map(apply_alias)
+# Note on the above: df.loc[<row_selector>, <column_selector>]!!! # select or assign values for specific rows and columns, ":"" selects all rows or columns
+happiness_df = fuzzy_merge(
+    happiness_df,
+    temperature_isolated_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['Average Winter Temperature', 'Average Summer Temperature'],
+    threshold=85
+)
 
 # 7) Population - simple
 population_isolated_df = data['population_df'][['Country/Territory', '2022 Population']]
@@ -349,6 +401,34 @@ happiness_df = fuzzy_merge(
 # 8) Energy Consumption - need to only grab rows with the latest year
 
 # 9) World Bank Development - need to only grab rows with the latest year
+wbdi_isolated_df = data['world_bank_development_df'][['country', 'date', 'agricultural_land%', 'forest_land%', 'land_area', 'avg_precipitation', 'control_of_corruption_std']]
+wbdi_isolated_df = wbdi_isolated_df.rename(columns={'country' : 'Country', 'agricultural_land%' : '% of Agricultural Land', 'forest_land%' : '% of Forest Land', 'land_area' : 'Territory', 'avg_precipitation' : 'Average Rainfall', 'control_of_corruption_std' : "Corruption"})
+wbdi_isolated_df['Country'] = wbdi_isolated_df['Country'].str.strip()
+wbdi_isolated_df['% of Agricultural Land'] = pd.to_numeric(wbdi_isolated_df['% of Agricultural Land'], errors='coerce')
+wbdi_isolated_df['% of Forest Land'] = pd.to_numeric(wbdi_isolated_df['% of Forest Land'], errors='coerce')
+wbdi_isolated_df['Territory'] = pd.to_numeric(wbdi_isolated_df['Territory'], errors='coerce')
+wbdi_isolated_df['Average Rainfall'] = pd.to_numeric(wbdi_isolated_df['Average Rainfall'], errors='coerce')
+wbdi_isolated_df['Corruption'] = pd.to_numeric(wbdi_isolated_df['Corruption'], errors='coerce')
+wbdi_isolated_df["Country_clean"] = wbdi_isolated_df["Country"].map(normalize_country).map(apply_alias)
+wbdi_isolated_df['date'] = pd.to_datetime(wbdi_isolated_df['date'], errors='coerce')
+wbdi_isolated_df["Country_clean"] = wbdi_isolated_df["Country"].map(normalize_country).map(apply_alias)
+# Copy Average Rainfall from 2020 to 2021
+rainfall_2020 = (
+    wbdi_isolated_df.loc[wbdi_isolated_df['date'].dt.year == 2020]
+    .groupby('Country_clean')['Average Rainfall']
+    .first()   # pick the first row per Country_clean
+)
+mask_2021 = (wbdi_isolated_df['date'].dt.year == 2021) & (wbdi_isolated_df['Average Rainfall'].isna())
+wbdi_isolated_df.loc[mask_2021, 'Average Rainfall'] = wbdi_isolated_df.loc[mask_2021, 'Country_clean'].map(rainfall_2020)
+wbdi_isolated_df = wbdi_isolated_df[wbdi_isolated_df['date'].dt.year == 2021]
+happiness_df = fuzzy_merge(
+    happiness_df,
+    wbdi_isolated_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['% of Agricultural Land', '% of Forest Land', 'Territory', 'Average Rainfall', 'Corruption'],
+    threshold=85
+)
 
 # 10) Food Production - need to only grab rows with the latest year
 
@@ -385,26 +465,23 @@ happiness_df = fuzzy_merge(
     threshold=85
 )
 
-# use AI to find which metrics correlate to happiness and which don't
+# 1) How many rows actually got any non-null values from wbdi?
+print(happiness_df['Average Rainfall'].head(10))
 
-# only keep numeric columns
-numeric_cols = happiness_df.select_dtypes(include='number')
-
-# correlation matrix
-corr_matrix = numeric_cols.corr()
-
-# focus on correlation with Happiness
-happiness_corr = corr_matrix['Happiness'].sort_values(ascending=False)
-
-print("Correlation of each metric with Happiness:\n")
-print(happiness_corr)
-
-# visualize
+# use pandas to find which metrics correlate to happiness and which don't
+numeric_cols = happiness_df.select_dtypes(include='number') # Focus on numeric columns 
+corr_matrix = numeric_cols.corr() # Correlation matrix
+corr_with_happiness = corr_matrix['Happiness'].drop('Happiness') # Remove the target
+colors = corr_with_happiness.apply(lambda x: 'blue' if x>0 else 'red').sort_values(ascending=False) # Differentiate positive and negative correlation
+corr_sorted = corr_with_happiness.abs().sort_values(ascending=False) # Take absolute value
 plt.figure(figsize=(8,6))
-happiness_corr.drop('Happiness').plot(kind='barh')
-plt.title("Correlation with Happiness")
-plt.xlabel("Correlation Coefficient")
-plt.subplots_adjust(left=0.35) # add padding to the left so labels don’t get cut off
+plt.barh(corr_sorted.index, corr_sorted.values, color=[colors[i] for i in corr_sorted.index])
+plt.xlabel("Strength of Correlation with Happiness (absolute)")
+plt.title("Which metrics affect Happiness most (color shows + / -)")
+plt.subplots_adjust(left=0.35)
 plt.show()
 
 # add more tables / metrics for more opportunities to find correlations
+# post on kaggle
+# add to portfolio
+# post about it on linked in
