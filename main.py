@@ -514,7 +514,8 @@ plt.title("Which metrics affect Happiness most (color shows + / -)")
 plt.subplots_adjust(left=0.35)
 plt.show()
 
-# add more tables / metrics for more opportunities to find correlations:
+# [_] fix nulls in the data --- see dummy db
+# [_] add more tables / metrics for more opportunities to find correlations:
 # GDP per capita: https://www.kaggle.com/datasets/nitishabharathi/gdp-per-capita-all-countries
 # Military spending: https://www.kaggle.com/datasets/nitinsss/military-expenditure-of-countries-19602019
 # Homicide rate: https://www.kaggle.com/datasets/bilalwaseer/countries-by-intentional-homicide-rate
@@ -522,9 +523,9 @@ plt.show()
 # Average age: https://www.kaggle.com/datasets/divyansh22/average-age-of-countries
 # Inflation: https://www.kaggle.com/datasets/meeratif/inflation-2022
 
-# post on kaggle
-# add to portfolio
-# post about it on linked in
+# [_] post on kaggle
+# [_] add to portfolio
+# [_] post about it on linked in
 
 # exporting to json
 def export_as_json():
