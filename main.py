@@ -525,3 +525,15 @@ plt.show()
 # post on kaggle
 # add to portfolio
 # post about it on linked in
+
+# exporting to json
+def export_as_json():
+    os.makedirs("exports", exist_ok=True)
+    json_path = os.path.join("exports", "happiness_df.json")
+    if not os.path.exists(json_path):
+        happiness_df.to_json(json_path, orient="records", indent=2)
+        print(f"✅ Exported to {json_path}")
+    else:
+        print(f"⚠️ File already exists at {json_path}, skipping export")
+
+export_as_json()
