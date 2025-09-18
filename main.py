@@ -399,6 +399,23 @@ happiness_df = fuzzy_merge(
 )
 
 # 8) Energy Consumption - need to only grab rows with the latest year
+energy_isolated_df = data['energy_consumption_df'][['country', 'year', 'energy_per_capita', 'fossil_share_elec', 'nuclear_share_elec', 'renewables_share_elec']]
+energy_isolated_df = energy_isolated_df.rename(columns={'country' : 'Country',  'energy_per_capita' : 'Energy Per Capita', 'fossil_share_elec' : '% of Power from Fossil Fuels', 'nuclear_share_elec' : '% of Power from Nuclear', 'renewables_share_elec' : '% of Power from Renewables'})
+energy_isolated_df['Country'] = energy_isolated_df['Country'].str.strip()
+energy_isolated_df['Energy Per Capita'] = pd.to_numeric(energy_isolated_df['Energy Per Capita'], errors='coerce')
+energy_isolated_df['% of Power from Fossil Fuels'] = pd.to_numeric(energy_isolated_df['% of Power from Fossil Fuels'], errors='coerce')
+energy_isolated_df['% of Power from Nuclear'] = pd.to_numeric(energy_isolated_df['% of Power from Nuclear'], errors='coerce')
+energy_isolated_df['% of Power from Renewables'] = pd.to_numeric(energy_isolated_df['% of Power from Renewables'], errors='coerce')
+energy_isolated_df["Country_clean"] = energy_isolated_df["Country"].map(normalize_country).map(apply_alias)
+energy_isolated_df = energy_isolated_df[energy_isolated_df["year"] == 2022]
+happiness_df = fuzzy_merge(
+    happiness_df,
+    energy_isolated_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['Energy Per Capita', '% of Power from Fossil Fuels', '% of Power from Nuclear', '% of Power from Renewables'],
+    threshold=85
+)
 
 # 9) World Bank Development - need to only grab rows with the latest year
 wbdi_isolated_df = data['world_bank_development_df'][['country', 'date', 'agricultural_land%', 'forest_land%', 'land_area', 'avg_precipitation', 'control_of_corruption_std']]
@@ -431,21 +448,40 @@ happiness_df = fuzzy_merge(
 )
 
 # 10) Food Production - need to only grab rows with the latest year
+food_production_isolated_df = data['food_production_df'][['Entity', 'Year', 'Wheat Production (tonnes)', 'Rye  Production (tonnes)', 'Potatoes  Production (tonnes)', 'Meat, chicken  Production (tonnes)', 'Avocados Production (tonnes)']]
+food_production_isolated_df = food_production_isolated_df.rename(columns={'Entity' : 'Country', 'Rye  Production (tonnes)' : 'Rye Production (tonnes)', 'Meat, chicken  Production (tonnes)' : 'Meat, chicken Production (tonnes)', 'Potatoes  Production (tonnes)' : 'Potatoes Production (tonnes)'})
+food_production_isolated_df = food_production_isolated_df.dropna().drop_duplicates()
+food_production_isolated_df['Country'] = food_production_isolated_df['Country'].str.strip()
+food_production_isolated_df['Wheat Production (tonnes)'] = pd.to_numeric(food_production_isolated_df['Wheat Production (tonnes)'], errors='coerce')
+food_production_isolated_df['Rye Production (tonnes)'] = pd.to_numeric(food_production_isolated_df['Rye Production (tonnes)'], errors='coerce')
+food_production_isolated_df['Potatoes Production (tonnes)'] = pd.to_numeric(food_production_isolated_df['Potatoes Production (tonnes)'], errors='coerce')
+food_production_isolated_df['Meat, chicken Production (tonnes)'] = pd.to_numeric(food_production_isolated_df['Meat, chicken Production (tonnes)'], errors='coerce')
+food_production_isolated_df['Avocados Production (tonnes)'] = pd.to_numeric(food_production_isolated_df['Avocados Production (tonnes)'], errors='coerce')
+food_production_isolated_df["Country_clean"] = food_production_isolated_df["Country"].map(normalize_country).map(apply_alias)
+food_production_isolated_df = food_production_isolated_df[food_production_isolated_df["Year"] == 2021]
+happiness_df = fuzzy_merge(
+    happiness_df,
+    food_production_isolated_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['Wheat Production (tonnes)', 'Rye Production (tonnes)', 'Potatoes Production (tonnes)', 'Meat, chicken Production (tonnes)', 'Avocados Production (tonnes)'],
+    threshold=85
+)
 
-# 11) Petrol Prices - simple
+# 11) Petrol Price (USD/liter) Petrol Prices - simple
 petrol_prices_isolated_df = data['petrol_prices_df'][['Country', 'Daily Oil Consumption (Barrels)', 'Price Per Liter (USD)']]
-petrol_prices_isolated_df = petrol_prices_isolated_df.rename(columns={'Price Per Liter (USD)' : 'Petrol (USD/liter)'})
+petrol_prices_isolated_df = petrol_prices_isolated_df.rename(columns={'Price Per Liter (USD)' : 'Petrol Price (USD/liter)'})
 petrol_prices_isolated_df = petrol_prices_isolated_df.dropna().drop_duplicates()
 petrol_prices_isolated_df['Country'] = petrol_prices_isolated_df['Country'].str.strip()
 petrol_prices_isolated_df['Daily Oil Consumption (Barrels)'] = pd.to_numeric(petrol_prices_isolated_df['Daily Oil Consumption (Barrels)'], errors='coerce')
-petrol_prices_isolated_df['Petrol (USD/liter)'] = pd.to_numeric(petrol_prices_isolated_df['Petrol (USD/liter)'], errors='coerce')
+petrol_prices_isolated_df['Petrol Price (USD/liter)'] = pd.to_numeric(petrol_prices_isolated_df['Petrol Price (USD/liter)'], errors='coerce')
 petrol_prices_isolated_df["Country_clean"] = petrol_prices_isolated_df["Country"].map(normalize_country).map(apply_alias)
 happiness_df = fuzzy_merge(
     happiness_df,
     petrol_prices_isolated_df,
     left_on='Country_clean',
     right_on='Country_clean',
-    right_cols=['Petrol (USD/liter)', 'Daily Oil Consumption (Barrels)'],
+    right_cols=['Petrol Price (USD/liter)', 'Daily Oil Consumption (Barrels)'],
     threshold=85
 )
 
@@ -465,9 +501,6 @@ happiness_df = fuzzy_merge(
     threshold=85
 )
 
-# 1) How many rows actually got any non-null values from wbdi?
-print(happiness_df['Average Rainfall'].head(10))
-
 # use pandas to find which metrics correlate to happiness and which don't
 numeric_cols = happiness_df.select_dtypes(include='number') # Focus on numeric columns 
 corr_matrix = numeric_cols.corr() # Correlation matrix
@@ -481,7 +514,14 @@ plt.title("Which metrics affect Happiness most (color shows + / -)")
 plt.subplots_adjust(left=0.35)
 plt.show()
 
-# add more tables / metrics for more opportunities to find correlations
+# add more tables / metrics for more opportunities to find correlations:
+# GDP per capita: https://www.kaggle.com/datasets/nitishabharathi/gdp-per-capita-all-countries
+# Military spending: https://www.kaggle.com/datasets/nitinsss/military-expenditure-of-countries-19602019
+# Homicide rate: https://www.kaggle.com/datasets/bilalwaseer/countries-by-intentional-homicide-rate
+# Geography variables: https://www.kaggle.com/datasets/zanderventer/environmental-variables-for-world-countries?select=World_countries_env_vars.csv
+# Average age: https://www.kaggle.com/datasets/divyansh22/average-age-of-countries
+# Inflation: https://www.kaggle.com/datasets/meeratif/inflation-2022
+
 # post on kaggle
 # add to portfolio
 # post about it on linked in
