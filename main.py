@@ -515,6 +515,7 @@ plt.subplots_adjust(left=0.35)
 plt.show()
 
 # [_] fix nulls in the data --- see dummy db
+# [_] calculate "weighted expected levels for each country's level of happiness" for each aspect to later calculate outlier numbers
 # [_] add more tables / metrics for more opportunities to find correlations:
 # GDP per capita: https://www.kaggle.com/datasets/nitishabharathi/gdp-per-capita-all-countries
 # Military spending: https://www.kaggle.com/datasets/nitinsss/military-expenditure-of-countries-19602019
