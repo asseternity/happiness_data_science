@@ -514,6 +514,8 @@ plt.title("Which metrics affect Happiness most (color shows + / -)")
 plt.subplots_adjust(left=0.35)
 plt.show()
 
+# [_] add to dictionary: ivory coast, south korea, guinea-bissau, russia, belarus, eswatini, czechia
+# [_] test other countries with no data on the website and add them to the leniency dictionary
 # [_] fix nulls in the data --- see dummy db
 # [_] calculate "weighted expected levels for each country's level of happiness" for each aspect to later calculate outlier numbers
 # [_] add more tables / metrics for more opportunities to find correlations:
