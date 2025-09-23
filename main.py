@@ -21,16 +21,114 @@ def normalize_country(name: str) -> str:
     return name.strip()
 
 country_aliases = {
+    # us and uk
     "usa": "united states",
     "us": "united states",
+    "united states of america": "united states",
+    "america": "united states",
+    "u s a": "united states",
+
     "uk": "united kingdom",
+    "united kingdom of great britain and northern ireland": "united kingdom",
+    "great britain": "united kingdom",
+    "britain": "united kingdom",
+
+    # korea
     "south korea": "korea republic of",
+    "korea republic of": "korea republic of",
+    "republic of korea": "korea republic of",
+    "korea south": "korea republic of",
+    "s korea": "korea republic of",
+    "ro korea": "korea republic of",
+    "korea, south": "korea republic of",
+
     "north korea": "korea democratic peoples republic of",
+    "democratic peoples republic of korea": "korea democratic peoples republic of",
+    "dprk": "korea democratic peoples republic of",
+
+    # russia / soviet-era variants
     "russia": "russian federation",
-    "venezuela": "venezuela bolivarian republic of",
-    "czechia": "czech republic",
+    "russian federation": "russian federation",
+    "russian fed": "russian federation",
+    "russian federation (the)": "russian federation",
+
+    # ivory coast
     "ivory coast": "cote divoire",
-    "antigua": "antigua and barbuda",
+    "cote d ivoire": "cote divoire",
+    "cote divoire": "cote divoire",
+    "cotedivoire": "cote divoire",
+
+    # guinea-bissau
+    "guinea bissau": "guinea bissau",
+    "guinea-bissau": "guinea bissau",
+    "republic of guinea bissau": "guinea bissau",
+
+    # belarus
+    "belarus": "belarus",
+    "belorussia": "belarus",
+    "byelorussia": "belarus",
+    "republic of belarus": "belarus",
+
+    # eswatini / swaziland
+    "eswatini": "eswatini",
+    "kingdom of eswatini": "eswatini",
+    "swaziland": "eswatini",
+    "kingdom of swaziland": "eswatini",
+
+    # czechia
+    "czechia": "czech republic",
+    "czech republic": "czech republic",
+
+    # other common alternates / formal names (helpful general additions)
+    "prc": "china",
+    "people s republic of china": "china",
+    "people s republic of china (china)": "china",
+    "china": "china",
+
+    "iran": "iran",
+    "islamic republic of iran": "iran",
+    "iran islamic republic of": "iran",
+
+    "syrian arab republic": "syria",
+    "syria": "syria",
+
+    "viet nam": "vietnam",
+    "vietnam": "vietnam",
+
+    "moldova": "moldova",
+    "republic of moldova": "moldova",
+    "moldova republic of": "moldova",
+
+    "bolivia": "bolivia",
+    "bolivia plurinational state of": "bolivia",
+
+    "vatican": "vatican city",
+    "vatican city": "vatican city",
+    "holy see": "vatican city",
+
+    "turkiye": "turkey",
+    "turkey": "turkey",
+
+    "cape verde": "cape verde",
+    "cabo verde": "cape verde",
+
+    "congo republic": "congo republic",
+    "congo democratic republic": "democratic republic of the congo",
+    "democratic republic of the congo": "democratic republic of the congo",
+    "dr congo": "democratic republic of the congo",
+
+    # small/alternate common forms
+    "slovakia": "slovakia",
+    "slovak republic": "slovakia",
+
+    "north macedonia": "north macedonia",
+    "republic of north macedonia": "north macedonia",
+
+    # handy abbreviations
+    "uae": "united arab emirates",
+    "u a e": "united arab emirates",
+    "drc": "democratic republic of the congo",
+    "ukraine": "ukraine",
 }
 
 def apply_alias(name):
@@ -133,10 +231,10 @@ def download_datasets():
         downloaded_datasets['happiness_df'] = happiness_df
 
     # Average Wage
-    average_wage_download_path = kagglehub.dataset_download("kabhishm/countries-by-average-wage")
-    average_wage_local_path = os.path.join(data_dir, "avg_wage.csv")
+    average_wage_download_path = kagglehub.dataset_download("zedataweaver/global-salary-data")
+    average_wage_local_path = os.path.join(data_dir, "salary_data.csv")
     if not os.path.exists(average_wage_local_path):
-        average_wage_df = pd.read_csv(f"{average_wage_download_path}/avg_wage.csv")
+        average_wage_df = pd.read_csv(f"{average_wage_download_path}/salary_data.csv")
         average_wage_df.to_csv(average_wage_local_path, index=False)
         downloaded_datasets['average_wage_df'] = average_wage_df
     else:
@@ -277,19 +375,22 @@ happiness_df = data['happiness_df'][['Country name', 'Country_clean', 'Regional 
 # then merge each one into happiness_df
 
 # 1) Average Wage - simple [but mind not full matches, also count them]
-average_wage_isolated_df = data['average_wage_df'][['Country', '2020']] 
+average_wage_isolated_df = data['average_wage_df'][['country_name', 'median_salary', 'average_salary', 'lowest_salary', 'highest_salary']] 
 # Note for above: DOUBLE SQUARE BRACKETS!!! 1st brackets are the INDEX selector, 2nd brackets are the LIST of columns we pass
-average_wage_isolated_df = average_wage_isolated_df.rename(columns={'2020': 'Average Wage (USD/year)'})
+average_wage_isolated_df = average_wage_isolated_df.rename(columns={'country_name': 'Country', 'median_salary' : 'Median Salary', 'average_salary' : 'Average Salary', 'lowest_salary' : 'Lowest Salary', 'highest_salary' : 'Highest Salary'})
 average_wage_isolated_df = average_wage_isolated_df.dropna().drop_duplicates()
 average_wage_isolated_df['Country'] = average_wage_isolated_df['Country'].str.strip()
-average_wage_isolated_df['Average Wage (USD/year)'] = pd.to_numeric(average_wage_isolated_df['Average Wage (USD/year)'], errors='coerce')
+average_wage_isolated_df['Median Salary'] = pd.to_numeric(average_wage_isolated_df['Median Salary'], errors='coerce')
+average_wage_isolated_df['Average Salary'] = pd.to_numeric(average_wage_isolated_df['Average Salary'], errors='coerce')
+average_wage_isolated_df['Lowest Salary'] = pd.to_numeric(average_wage_isolated_df['Lowest Salary'], errors='coerce')
+average_wage_isolated_df['Highest Salary'] = pd.to_numeric(average_wage_isolated_df['Highest Salary'], errors='coerce')
 average_wage_isolated_df["Country_clean"] = average_wage_isolated_df["Country"].map(normalize_country).map(apply_alias)
 happiness_df = fuzzy_merge(
     happiness_df,
     average_wage_isolated_df,
     left_on='Country_clean',
     right_on='Country_clean',
-    right_cols=['Average Wage (USD/year)'],
+    right_cols=['Median Salary', 'Average Salary', 'Lowest Salary', 'Highest Salary'],
     threshold=85
 )
 
@@ -298,18 +399,31 @@ happiness_df = fuzzy_merge(
 # 3) Lifespan - need to only grab rows with the latest year
 life_expectancy_isolated_df = data['life_expectancy_df'][['Country', 'Year', 'infant deaths', 'Alcohol', 'Life expectancy']]
 life_expectancy_isolated_df = life_expectancy_isolated_df.rename(columns={'infant deaths': "Infant Death Rate", 'Alcohol': 'Alcohol Consumption Rate', 'Life expectancy' : 'Life Expectancy'})
-life_expectancy_isolated_df = life_expectancy_isolated_df.dropna().drop_duplicates()
+life_expectancy_isolated_df = life_expectancy_isolated_df.drop_duplicates()
 life_expectancy_isolated_df['Country'] = life_expectancy_isolated_df['Country'].str.strip()
 life_expectancy_isolated_df['Infant Death Rate'] = pd.to_numeric(life_expectancy_isolated_df['Infant Death Rate'], errors='coerce')
 life_expectancy_isolated_df['Infant Survival Rate'] = 1000 - life_expectancy_isolated_df['Infant Death Rate'] 
 # Note for above: PD applies things ELEMENT-WIDE!!! so: every row in gets transformed into "survival rate" as 1000 - value.
 life_expectancy_isolated_df['Alcohol Consumption Rate'] = pd.to_numeric(life_expectancy_isolated_df['Alcohol Consumption Rate'], errors='coerce')
 life_expectancy_isolated_df['Life Expectancy'] = pd.to_numeric(life_expectancy_isolated_df['Life Expectancy'], errors='coerce')
-life_expectancy_isolated_df = life_expectancy_isolated_df[life_expectancy_isolated_df["Year"] == 2015]
 life_expectancy_isolated_df["Country_clean"] = life_expectancy_isolated_df["Country"].map(normalize_country).map(apply_alias)
+life_expectancy_isolated_df = life_expectancy_isolated_df.sort_values(
+    ["Country_clean", "Year"]
+)
+life_expectancy_latest = (
+    life_expectancy_isolated_df
+    .groupby("Country_clean")
+    .agg({
+        "Year": "max",
+        "Infant Survival Rate": "last",
+        "Alcohol Consumption Rate": "last",
+        "Life Expectancy": "last"
+    })
+    .reset_index()
+)
 happiness_df = fuzzy_merge(
     happiness_df,
-    life_expectancy_isolated_df,
+    life_expectancy_latest,
     left_on='Country_clean',
     right_on='Country_clean',
     right_cols=['Infant Survival Rate', 'Alcohol Consumption Rate', 'Life Expectancy'],
@@ -401,16 +515,32 @@ happiness_df = fuzzy_merge(
 # 8) Energy Consumption - need to only grab rows with the latest year
 energy_isolated_df = data['energy_consumption_df'][['country', 'year', 'energy_per_capita', 'fossil_share_elec', 'nuclear_share_elec', 'renewables_share_elec']]
 energy_isolated_df = energy_isolated_df.rename(columns={'country' : 'Country',  'energy_per_capita' : 'Energy Per Capita', 'fossil_share_elec' : '% of Power from Fossil Fuels', 'nuclear_share_elec' : '% of Power from Nuclear', 'renewables_share_elec' : '% of Power from Renewables'})
+energy_isolated_df = energy_isolated_df[~energy_isolated_df['Country'].str.contains(r"\(|region|aggregate|ember", case=False, na=False)] # drop obvious aggregates 
 energy_isolated_df['Country'] = energy_isolated_df['Country'].str.strip()
 energy_isolated_df['Energy Per Capita'] = pd.to_numeric(energy_isolated_df['Energy Per Capita'], errors='coerce')
 energy_isolated_df['% of Power from Fossil Fuels'] = pd.to_numeric(energy_isolated_df['% of Power from Fossil Fuels'], errors='coerce')
 energy_isolated_df['% of Power from Nuclear'] = pd.to_numeric(energy_isolated_df['% of Power from Nuclear'], errors='coerce')
 energy_isolated_df['% of Power from Renewables'] = pd.to_numeric(energy_isolated_df['% of Power from Renewables'], errors='coerce')
+energy_isolated_df['year'] = pd.to_numeric(energy_isolated_df['year'], errors='coerce')
 energy_isolated_df["Country_clean"] = energy_isolated_df["Country"].map(normalize_country).map(apply_alias)
-energy_isolated_df = energy_isolated_df[energy_isolated_df["year"] == 2022]
+energy_isolated_df = energy_isolated_df.sort_values(
+    ["Country_clean", "year"]
+)
+energy_latest = (
+    energy_isolated_df
+    .groupby("Country_clean")
+    .agg({
+        "year": "max",
+        "Energy Per Capita": "last",
+        "% of Power from Fossil Fuels": "last",
+        "% of Power from Nuclear": "last",
+        "% of Power from Renewables": "last"
+    })
+    .reset_index()
+)
 happiness_df = fuzzy_merge(
     happiness_df,
-    energy_isolated_df,
+    energy_latest,
     left_on='Country_clean',
     right_on='Country_clean',
     right_cols=['Energy Per Capita', '% of Power from Fossil Fuels', '% of Power from Nuclear', '% of Power from Renewables'],
@@ -458,10 +588,25 @@ food_production_isolated_df['Potatoes Production (tonnes)'] = pd.to_numeric(food
 food_production_isolated_df['Meat, chicken Production (tonnes)'] = pd.to_numeric(food_production_isolated_df['Meat, chicken Production (tonnes)'], errors='coerce')
 food_production_isolated_df['Avocados Production (tonnes)'] = pd.to_numeric(food_production_isolated_df['Avocados Production (tonnes)'], errors='coerce')
 food_production_isolated_df["Country_clean"] = food_production_isolated_df["Country"].map(normalize_country).map(apply_alias)
-food_production_isolated_df = food_production_isolated_df[food_production_isolated_df["Year"] == 2021]
+food_production_isolated_df = food_production_isolated_df.sort_values(
+    ["Country_clean", "Year"]
+)
+food_production_latest = (
+    food_production_isolated_df
+    .groupby("Country_clean")
+    .agg({
+        "Year": "max",
+        "Wheat Production (tonnes)": "last",
+        "Rye Production (tonnes)": "last",
+        "Potatoes Production (tonnes)" : "last",
+        "Meat, chicken Production (tonnes)": "last",
+        "Avocados Production (tonnes)": "last",
+    })
+    .reset_index()
+)
 happiness_df = fuzzy_merge(
     happiness_df,
-    food_production_isolated_df,
+    food_production_latest,
     left_on='Country_clean',
     right_on='Country_clean',
     right_cols=['Wheat Production (tonnes)', 'Rye Production (tonnes)', 'Potatoes Production (tonnes)', 'Meat, chicken Production (tonnes)', 'Avocados Production (tonnes)'],
@@ -514,11 +659,12 @@ plt.title("Which metrics affect Happiness most (color shows + / -)")
 plt.subplots_adjust(left=0.35)
 plt.show()
 
-# [_] add to dictionary: ivory coast, south korea, guinea-bissau, russia, belarus, eswatini, czechia
-# [_] test other countries with no data on the website and add them to the leniency dictionary
-# [_] fix nulls in the data --- see dummy db
+# [v] fix nulls in the data --- see dummy db
+# [v] add to dictionary: ivory coast, south korea, guinea-bissau, russia, belarus, eswatini, czechia
+# [v] test other countries with no data on the website and add them to the leniency dictionary
+# [_] finish adding the previous datasets 
 # [_] calculate "weighted expected levels for each country's level of happiness" for each aspect to later calculate outlier numbers
-# [_] add more tables / metrics for more opportunities to find correlations:
+# [_] do data analysis: add more tables / metrics for more opportunities to find correlations:
 # GDP per capita: https://www.kaggle.com/datasets/nitishabharathi/gdp-per-capita-all-countries
 # Military spending: https://www.kaggle.com/datasets/nitinsss/military-expenditure-of-countries-19602019
 # Homicide rate: https://www.kaggle.com/datasets/bilalwaseer/countries-by-intentional-homicide-rate
@@ -541,3 +687,9 @@ def export_as_json():
         print(f"⚠️ File already exists at {json_path}, skipping export")
 
 export_as_json()
+
+# count nulls
+null_counts = happiness_df.isna().sum().sort_values(ascending=False)
+
+print("Null count per column:")
+print(null_counts)
