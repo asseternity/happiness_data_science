@@ -1,118 +1,147 @@
 [
   {
-    "metric":"Women Safety Index",
-    "weight":0.7713289613
-  },
-  {
-    "metric":"Life Expectancy",
-    "weight":0.7416090513
-  },
-  {
-    "metric":"Netflix (USD\/month)",
-    "weight":0.68233766
-  },
-  {
     "metric":"Median Salary",
-    "weight":0.6558076975
+    "weight_signed":0.6558076975,
+    "weight_magnitude":0.6558076975
   },
   {
     "metric":"Average Salary",
-    "weight":0.6523718342
-  },
-  {
-    "metric":"Highest Salary",
-    "weight":0.652181275
+    "weight_signed":0.6523718342,
+    "weight_magnitude":0.6523718342
   },
   {
     "metric":"Lowest Salary",
-    "weight":0.6485308062
+    "weight_signed":0.6485308062,
+    "weight_magnitude":0.6485308062
   },
   {
-    "metric":"Energy Per Capita",
-    "weight":0.5801967755
-  },
-  {
-    "metric":"CO2 Emissions (ton per capita)",
-    "weight":0.5727786876
-  },
-  {
-    "metric":"Alcohol Consumption Rate",
-    "weight":0.5697201294
-  },
-  {
-    "metric":"Petrol Price (USD\/liter)",
-    "weight":0.4486226673
-  },
-  {
-    "metric":"Average Winter Temperature",
-    "weight":0.4293739779
-  },
-  {
-    "metric":"Average Summer Temperature",
-    "weight":0.4283984286
-  },
-  {
-    "metric":"% of Power from Nuclear",
-    "weight":0.2760217511
-  },
-  {
-    "metric":"% of Agricultural Land",
-    "weight":0.2509434126
+    "metric":"Highest Salary",
+    "weight_signed":0.652181275,
+    "weight_magnitude":0.652181275
   },
   {
     "metric":"Infant Survival Rate",
-    "weight":0.2322032702
+    "weight_signed":0.2322032702,
+    "weight_magnitude":0.2322032702
   },
   {
-    "metric":"% of Forest Land",
-    "weight":0.1552674975
+    "metric":"Alcohol Consumption Rate",
+    "weight_signed":0.5697201294,
+    "weight_magnitude":0.5697201294
   },
   {
-    "metric":"Daily Oil Consumption (Barrels)",
-    "weight":0.1522584044
+    "metric":"Life Expectancy",
+    "weight_signed":0.7416090513,
+    "weight_magnitude":0.7416090513
   },
   {
-    "metric":"% of Power from Fossil Fuels",
-    "weight":0.1362477334
+    "metric":"Netflix (USD\/month)",
+    "weight_signed":0.68233766,
+    "weight_magnitude":0.68233766
   },
   {
-    "metric":"Territory",
-    "weight":0.1241759612
+    "metric":"Women Safety Index",
+    "weight_signed":0.7713289613,
+    "weight_magnitude":0.7713289613
   },
   {
-    "metric":"Potatoes Production (tonnes)",
-    "weight":0.1034607974
+    "metric":"Average Winter Temperature",
+    "weight_signed":-0.4293739779,
+    "weight_magnitude":0.4293739779
   },
   {
-    "metric":"Wheat Production (tonnes)",
-    "weight":0.0991311381
-  },
-  {
-    "metric":"Rye Production (tonnes)",
-    "weight":0.0566746652
-  },
-  {
-    "metric":"Average Rainfall",
-    "weight":0.0560770183
-  },
-  {
-    "metric":"Corruption",
-    "weight":0.0494015891
-  },
-  {
-    "metric":"% of Power from Renewables",
-    "weight":0.0225333231
-  },
-  {
-    "metric":"Avocados Production (tonnes)",
-    "weight":0.0224689248
+    "metric":"Average Summer Temperature",
+    "weight_signed":-0.4283984286,
+    "weight_magnitude":0.4283984286
   },
   {
     "metric":"Population",
-    "weight":0.0219677181
+    "weight_signed":-0.0219677181,
+    "weight_magnitude":0.0219677181
+  },
+  {
+    "metric":"Energy Per Capita",
+    "weight_signed":0.5801967755,
+    "weight_magnitude":0.5801967755
+  },
+  {
+    "metric":"% of Power from Fossil Fuels",
+    "weight_signed":-0.1362477334,
+    "weight_magnitude":0.1362477334
+  },
+  {
+    "metric":"% of Power from Nuclear",
+    "weight_signed":0.2760217511,
+    "weight_magnitude":0.2760217511
+  },
+  {
+    "metric":"% of Power from Renewables",
+    "weight_signed":0.0225333231,
+    "weight_magnitude":0.0225333231
+  },
+  {
+    "metric":"% of Agricultural Land",
+    "weight_signed":-0.2509434126,
+    "weight_magnitude":0.2509434126
+  },
+  {
+    "metric":"% of Forest Land",
+    "weight_signed":0.1552674975,
+    "weight_magnitude":0.1552674975
+  },
+  {
+    "metric":"Territory",
+    "weight_signed":0.1241759612,
+    "weight_magnitude":0.1241759612
+  },
+  {
+    "metric":"Average Rainfall",
+    "weight_signed":0.0560770183,
+    "weight_magnitude":0.0560770183
+  },
+  {
+    "metric":"Corruption",
+    "weight_signed":0.0494015891,
+    "weight_magnitude":0.0494015891
+  },
+  {
+    "metric":"Wheat Production (tonnes)",
+    "weight_signed":0.0991311381,
+    "weight_magnitude":0.0991311381
+  },
+  {
+    "metric":"Rye Production (tonnes)",
+    "weight_signed":-0.0566746652,
+    "weight_magnitude":0.0566746652
+  },
+  {
+    "metric":"Potatoes Production (tonnes)",
+    "weight_signed":-0.1034607974,
+    "weight_magnitude":0.1034607974
   },
   {
     "metric":"Meat, chicken Production (tonnes)",
-    "weight":0.0025616182
+    "weight_signed":0.0025616182,
+    "weight_magnitude":0.0025616182
+  },
+  {
+    "metric":"Avocados Production (tonnes)",
+    "weight_signed":-0.0224689248,
+    "weight_magnitude":0.0224689248
+  },
+  {
+    "metric":"Petrol Price (USD\/liter)",
+    "weight_signed":0.4486226673,
+    "weight_magnitude":0.4486226673
+  },
+  {
+    "metric":"Daily Oil Consumption (Barrels)",
+    "weight_signed":0.1522584044,
+    "weight_magnitude":0.1522584044
+  },
+  {
+    "metric":"CO2 Emissions (ton per capita)",
+    "weight_signed":0.5727786876,
+    "weight_magnitude":0.5727786876
   }
 ]

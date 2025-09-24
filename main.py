@@ -689,8 +689,17 @@ def export_as_json():
         print(f"⚠️ File already exists at {json_path_main}, skipping export")
     json_path_corr = os.path.join("exports", "happiness_corr.json")
     if not os.path.exists(json_path_corr):
-        df = pd.DataFrame({ "metric" : corr_sorted.index, "weight" : corr_sorted.values })
-        df.to_json(json_path_corr, orient="records", indent=2)
+        # compute signed correlations and export both signed and absolute weights
+        numeric_cols = happiness_df.select_dtypes(include='number')
+        corr_with_happiness = numeric_cols.corr()['Happiness'].drop('Happiness')
+
+        # DataFrame with signed weight and absolute magnitude
+        corr_df = pd.DataFrame({
+            "metric": corr_with_happiness.index,
+            "weight_signed": corr_with_happiness.values,           # signed correlation (-1..1)
+            "weight_magnitude": corr_with_happiness.abs().values  # magnitude for display / scaling
+        })
+        corr_df.to_json(json_path_corr, orient="records", indent=2)
         print(f"✅ Exported to {json_path_corr}")
     else:
         print(f"⚠️ File already exists at {json_path_corr}, skipping export")
