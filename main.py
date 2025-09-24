@@ -662,9 +662,11 @@ plt.show()
 # [v] fix nulls in the data --- see dummy db
 # [v] add to dictionary: ivory coast, south korea, guinea-bissau, russia, belarus, eswatini, czechia
 # [v] test other countries with no data on the website and add them to the leniency dictionary
+# [v] calculate "weighted expected levels for each country's level of happiness" for each aspect to later calculate outlier numbers
+# [v] export effect coefficients as well
 # [_] finish adding the previous datasets 
-# [_] calculate "weighted expected levels for each country's level of happiness" for each aspect to later calculate outlier numbers
-# [_] do data analysis: add more tables / metrics for more opportunities to find correlations:
+# [_] add more tables / metrics for more opportunities to find correlations:
+# Cost of living: ???
 # GDP per capita: https://www.kaggle.com/datasets/nitishabharathi/gdp-per-capita-all-countries
 # Military spending: https://www.kaggle.com/datasets/nitinsss/military-expenditure-of-countries-19602019
 # Homicide rate: https://www.kaggle.com/datasets/bilalwaseer/countries-by-intentional-homicide-rate
@@ -679,12 +681,19 @@ plt.show()
 # exporting to json
 def export_as_json():
     os.makedirs("exports", exist_ok=True)
-    json_path = os.path.join("exports", "happiness_df.json")
-    if not os.path.exists(json_path):
-        happiness_df.to_json(json_path, orient="records", indent=2)
-        print(f"✅ Exported to {json_path}")
+    json_path_main = os.path.join("exports", "happiness_df.json")
+    if not os.path.exists(json_path_main):
+        happiness_df.to_json(json_path_main, orient="records", indent=2)
+        print(f"✅ Exported to {json_path_main}")
     else:
-        print(f"⚠️ File already exists at {json_path}, skipping export")
+        print(f"⚠️ File already exists at {json_path_main}, skipping export")
+    json_path_corr = os.path.join("exports", "happiness_corr.json")
+    if not os.path.exists(json_path_corr):
+        df = pd.DataFrame({ "metric" : corr_sorted.index, "weight" : corr_sorted.values })
+        df.to_json(json_path_corr, orient="records", indent=2)
+        print(f"✅ Exported to {json_path_corr}")
+    else:
+        print(f"⚠️ File already exists at {json_path_corr}, skipping export")
 
 export_as_json()
 
