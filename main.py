@@ -393,7 +393,77 @@ happiness_df = fuzzy_merge(
     threshold=85
 )
 
-# # 2) IQ Air - need to sort cities into countries
+# 2) IQ Air - extract country from city, aggregate cities per country, compute mean AQI, and merge
+iq_air_df = data['iq_air_df'].copy()
+iq_air_df.columns = [c.strip() for c in iq_air_df.columns]
+
+# detect likely column names
+city_col = next((c for c in iq_air_df.columns if 'city' in c.lower()), None)
+# prefer a 4-digit year column like "2021" then fallback to first numeric column
+value_col = next((c for c in iq_air_df.columns if re.fullmatch(r'\d{4}', c)), None)
+if value_col is None:
+    value_col = next((c for c in iq_air_df.columns if '2021' in c or '2022' in c), None)
+if value_col is None:
+    numeric_cols = iq_air_df.select_dtypes(include='number').columns.tolist()
+    value_col = numeric_cols[0] if numeric_cols else None
+
+if city_col is None or value_col is None:
+    raise ValueError("Could not detect 'city' column or a numeric AQI column in the IQAir dataset.")
+
+# helper: extract country from city text
+def extract_country_from_city(city_text: str) -> str:
+    if pd.isna(city_text):
+        return None
+    s = str(city_text).strip()
+    # common formats:
+    # "City, Country", "City, State, Country", "City (Country)", "City - Country"
+    # 1) last comma-separated token
+    m = re.search(r',\s*([^,]+)\s*$', s)
+    if m:
+        return m.group(1).strip()
+    # 2) parentheses at the end
+    m = re.search(r'\(([^)]+)\)\s*$', s)
+    if m:
+        return m.group(1).strip()
+    # 3) dash / pipe separators
+    m = re.search(r'[-|]\s*([^-\|]+)\s*$', s)
+    if m:
+        return m.group(1).strip()
+    # 4) fallback: last word (may be wrong for multi-word country names but better than nothing)
+    parts = s.split()
+    return parts[-1].strip() if parts else None
+
+# apply extraction and cleaning
+iq_air_df['Country_extracted'] = iq_air_df[city_col].astype(str).apply(extract_country_from_city)
+iq_air_df['Country_clean'] = iq_air_df['Country_extracted'].map(normalize_country).map(apply_alias)
+
+# numeric conversion for the AQI/value column
+iq_air_df[value_col] = pd.to_numeric(iq_air_df[value_col], errors='coerce')
+
+# aggregate per country: mean (and median) of the numeric value and count of cities
+iq_air_country = (
+    iq_air_df
+    .dropna(subset=['Country_clean'])
+    .groupby('Country_clean', as_index=False)
+    .agg(
+        IQAir_AQI_Mean = (value_col, 'mean'),
+        IQAir_AQI_Median = (value_col, 'median')
+    )
+)
+
+# optional: round the AQI numbers
+iq_air_country['IQAir_AQI_Mean'] = iq_air_country['IQAir_AQI_Mean'].round(2)
+iq_air_country['IQAir_AQI_Median'] = iq_air_country['IQAir_AQI_Median'].round(2)
+
+# fuzzy-merge into happiness_df (matches pipeline style)
+happiness_df = fuzzy_merge(
+    happiness_df,
+    iq_air_country,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['IQAir_AQI_Mean', 'IQAir_AQI_Median'],
+    threshold=85
+)
 
 # 3) Lifespan - need to only grab rows with the latest year
 life_expectancy_isolated_df = data['life_expectancy_df'][['Country', 'Year', 'infant deaths', 'Alcohol', 'Life expectancy']]

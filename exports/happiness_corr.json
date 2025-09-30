@@ -20,6 +20,21 @@
     "weight_magnitude":0.652181275
   },
   {
+    "metric":"IQAir_AQI_Mean",
+    "weight_signed":-0.4827959499,
+    "weight_magnitude":0.4827959499
+  },
+  {
+    "metric":"IQAir_AQI_Median",
+    "weight_signed":-0.473119728,
+    "weight_magnitude":0.473119728
+  },
+  {
+    "metric":"IQAir_City_Count",
+    "weight_signed":0.1337030156,
+    "weight_magnitude":0.1337030156
+  },
+  {
     "metric":"Infant Survival Rate",
     "weight_signed":0.2322032702,
     "weight_magnitude":0.2322032702
