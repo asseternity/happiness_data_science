@@ -20,19 +20,9 @@
     "weight_magnitude":0.652181275
   },
   {
-    "metric":"IQAir_AQI_Mean",
-    "weight_signed":-0.4827959499,
-    "weight_magnitude":0.4827959499
-  },
-  {
-    "metric":"IQAir_AQI_Median",
+    "metric":"IQAir_AQI",
     "weight_signed":-0.473119728,
     "weight_magnitude":0.473119728
-  },
-  {
-    "metric":"IQAir_City_Count",
-    "weight_signed":0.1337030156,
-    "weight_magnitude":0.1337030156
   },
   {
     "metric":"Infant Survival Rate",
@@ -158,5 +148,55 @@
     "metric":"CO2 Emissions (ton per capita)",
     "weight_signed":0.5727786876,
     "weight_magnitude":0.5727786876
+  },
+  {
+    "metric":"Price per Square Meter to Buy Apartment in City Centre (USD)",
+    "weight_signed":0.0116504384,
+    "weight_magnitude":0.0116504384
+  },
+  {
+    "metric":"Fitness Club, Monthly Fee for 1 Adult (USD)",
+    "weight_signed":0.1494452699,
+    "weight_magnitude":0.1494452699
+  },
+  {
+    "metric":"Internet (60 Mbps or More, Unlimited Data, Cable\/ADSL) (USD)",
+    "weight_signed":-0.3850210632,
+    "weight_magnitude":0.3850210632
+  },
+  {
+    "metric":"Coke\/Pepsi (0.33 liter bottle, in restaurants) (USD)",
+    "weight_signed":0.4883880713,
+    "weight_magnitude":0.4883880713
+  },
+  {
+    "metric":"Meal for 2 People, Mid-range Restaurant, Three-course (USD)",
+    "weight_signed":0.6293410799,
+    "weight_magnitude":0.6293410799
+  },
+  {
+    "metric":"GDP Per Capita",
+    "weight_signed":0.6913383494,
+    "weight_magnitude":0.6913383494
+  },
+  {
+    "metric":"Military Expenditure (USD\/year)",
+    "weight_signed":0.1428679802,
+    "weight_magnitude":0.1428679802
+  },
+  {
+    "metric":"Yearly Homicide Rate (% per 100,000 people)",
+    "weight_signed":-0.1431878775,
+    "weight_magnitude":0.1431878775
+  },
+  {
+    "metric":"Average Age",
+    "weight_signed":0.7032851312,
+    "weight_magnitude":0.7032851312
+  },
+  {
+    "metric":"Inflation Rate (year)",
+    "weight_signed":-0.2963979455,
+    "weight_magnitude":0.2963979455
   }
 ]

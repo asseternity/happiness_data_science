@@ -1,6 +1,7 @@
 import kagglehub
 import pandas as pd
 import os
+from string_helpers import normalize_country, apply_alias
 
 # download happiness + lots of other tables | store the csvs to not re-download data 
 def download_datasets():
@@ -152,6 +153,78 @@ def download_datasets():
     else:
         co2_emissions_df = pd.read_csv(f"{co2_emissions_local_path}")
         downloaded_datasets['co2_emissions_df'] = co2_emissions_df
+
+    # https://www.kaggle.com/datasets/mvieira101/global-cost-of-living
+    # Cost of Living
+    cost_of_living_download_path = kagglehub.dataset_download("mvieira101/global-cost-of-living");
+    cost_of_living_local_path = os.path.join(data_dir, "cost-of-living_v2.csv");
+    if not os.path.exists(cost_of_living_local_path):
+        cost_of_living_df = pd.read_csv(f"{cost_of_living_download_path}/cost-of-living_v2.csv")
+        cost_of_living_df.to_csv(cost_of_living_local_path, index=False)
+        downloaded_datasets['cost_of_living_df'] = cost_of_living_df
+    else:
+        cost_of_living_df = pd.read_csv(f"{cost_of_living_local_path}")
+        downloaded_datasets['cost_of_living_df'] = cost_of_living_df
+
+    # https://www.kaggle.com/datasets/nitishabharathi/gdp-per-capita-all-countries
+    # GDP Per Capita
+    gdp_per_capita_download_path = kagglehub.dataset_download("nitishabharathi/gdp-per-capita-all-countries");
+    gdp_per_capita_local_path = os.path.join(data_dir, "GDP.csv");
+    if not os.path.exists(gdp_per_capita_local_path):
+        gdp_per_capita_df = pd.read_csv(f"{gdp_per_capita_download_path}/GDP.csv")
+        gdp_per_capita_df.to_csv(gdp_per_capita_local_path, index=False)
+        downloaded_datasets['gdp_per_capita_df'] = gdp_per_capita_df
+    else:
+        gdp_per_capita_df = pd.read_csv(f"{gdp_per_capita_local_path}")
+        downloaded_datasets['gdp_per_capita_df'] = gdp_per_capita_df
+
+    # https://www.kaggle.com/datasets/nitinsss/military-expenditure-of-countries-19602019
+    # Military Expenditure
+    military_exp_download_path = kagglehub.dataset_download("nitinsss/military-expenditure-of-countries-19602019");
+    military_exp_local_path = os.path.join(data_dir, "Military Expenditure.csv");
+    if not os.path.exists(military_exp_local_path):
+        military_exp_df = pd.read_csv(f"{military_exp_download_path}/Military Expenditure.csv")
+        military_exp_df.to_csv(military_exp_local_path, index=False)
+        downloaded_datasets['military_exp_df'] = military_exp_df
+    else:
+        military_exp_df = pd.read_csv(f"{military_exp_local_path}")
+        downloaded_datasets['military_exp_df'] = military_exp_df
+
+    # https://www.kaggle.com/datasets/bilalwaseer/countries-by-intentional-homicide-rate
+    # Homicide Rate
+    homicide_rate_download_path = kagglehub.dataset_download("bilalwaseer/countries-by-intentional-homicide-rate");
+    homicide_rate_local_path = os.path.join(data_dir, "countries-by-intentional-homicide-rate.csv");
+    if not os.path.exists(homicide_rate_local_path):
+        homicide_rate_df = pd.read_csv(f"{homicide_rate_download_path}/countries-by-intentional-homicide-rate.csv")
+        homicide_rate_df.to_csv(homicide_rate_local_path, index=False)
+        downloaded_datasets['homicide_rate_df'] = homicide_rate_df
+    else:
+        homicide_rate_df = pd.read_csv(f"{homicide_rate_local_path}")
+        downloaded_datasets['homicide_rate_df'] = homicide_rate_df
+
+    # https://www.kaggle.com/datasets/divyansh22/average-age-of-countries
+    # Average Ages
+    average_age_download_path = kagglehub.dataset_download("divyansh22/average-age-of-countries");
+    average_age_local_path = os.path.join(data_dir, "MedianAge.csv");
+    if not os.path.exists(average_age_local_path):
+        average_age_df = pd.read_csv(f"{average_age_download_path}/MedianAge.csv")
+        average_age_df.to_csv(average_age_local_path, index=False)
+        downloaded_datasets['average_age_df'] = average_age_df
+    else:
+        average_age_df = pd.read_csv(f"{average_age_local_path}")
+        downloaded_datasets['average_age_df'] = average_age_df
+
+    # https://www.kaggle.com/datasets/meeratif/inflation-2022
+    # Inflation
+    inflation_download_path = kagglehub.dataset_download("meeratif/inflation-2022");
+    inflation_local_path = os.path.join(data_dir, "Inflation.csv");
+    if not os.path.exists(inflation_local_path):
+        inflation_df = pd.read_csv(f"{inflation_download_path}/Inflation.csv")
+        inflation_df.to_csv(inflation_local_path, index=False)
+        downloaded_datasets['inflation_df'] = inflation_df
+    else:
+        inflation_df = pd.read_csv(f"{inflation_local_path}")
+        downloaded_datasets['inflation_df'] = inflation_df
 
     # Return all dataframes
     return downloaded_datasets

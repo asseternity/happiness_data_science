@@ -94,14 +94,12 @@ iq_air_country = (
     .dropna(subset=['Country_clean'])
     .groupby('Country_clean', as_index=False)
     .agg(
-        IQAir_AQI_Mean = (value_col, 'mean'),
-        IQAir_AQI_Median = (value_col, 'median')
+        IQAir_AQI = (value_col, 'median')
     )
 )
 
 # optional: round the AQI numbers
-iq_air_country['IQAir_AQI_Mean'] = iq_air_country['IQAir_AQI_Mean'].round(2)
-iq_air_country['IQAir_AQI_Median'] = iq_air_country['IQAir_AQI_Median'].round(2)
+iq_air_country['IQAir_AQI'] = iq_air_country['IQAir_AQI'].round(2)
 
 # fuzzy-merge into happiness_df (matches pipeline style)
 happiness_df = fuzzy_merge(
@@ -109,7 +107,7 @@ happiness_df = fuzzy_merge(
     iq_air_country,
     left_on='Country_clean',
     right_on='Country_clean',
-    right_cols=['IQAir_AQI_Mean', 'IQAir_AQI_Median'],
+    right_cols=['IQAir_AQI'],
     threshold=85
 )
 
@@ -363,6 +361,146 @@ happiness_df = fuzzy_merge(
     threshold=85
 )
 
+# 13) Cost of Living
+# 1) Pick which columns to download
+cost_of_living_df = data['cost_of_living_df'][['city', 'country', 'x52', 'x39', 'x38', 'x7', 'x2']]
+# 2) Rename the columns for clarity and to match main research df
+cost_of_living_column_dict = {'country' : 'Country', 
+                              'x52' : 'Price per Square Meter to Buy Apartment in City Centre (USD)', 
+                              'x39' : 'Fitness Club, Monthly Fee for 1 Adult (USD)', 
+                              'x38' : 'Internet (60 Mbps or More, Unlimited Data, Cable/ADSL) (USD)', 
+                              'x7' : 'Coke/Pepsi (0.33 liter bottle, in restaurants) (USD)', 
+                              'x2' : 'Meal for 2 People, Mid-range Restaurant, Three-course (USD)'}
+cost_of_living_df = cost_of_living_df.rename(columns=cost_of_living_column_dict)
+# 3) Transform numeric columns
+cost_of_living_df['Price per Square Meter to Buy Apartment in City Centre (USD)'] = pd.to_numeric(cost_of_living_df['Price per Square Meter to Buy Apartment in City Centre (USD)'], errors='coerce')
+cost_of_living_df['Fitness Club, Monthly Fee for 1 Adult (USD)'] = pd.to_numeric(cost_of_living_df['Fitness Club, Monthly Fee for 1 Adult (USD)'], errors='coerce')
+cost_of_living_df['Internet (60 Mbps or More, Unlimited Data, Cable/ADSL) (USD)'] = pd.to_numeric(cost_of_living_df['Internet (60 Mbps or More, Unlimited Data, Cable/ADSL) (USD)'], errors='coerce')
+cost_of_living_df['Coke/Pepsi (0.33 liter bottle, in restaurants) (USD)'] = pd.to_numeric(cost_of_living_df['Coke/Pepsi (0.33 liter bottle, in restaurants) (USD)'], errors='coerce')
+cost_of_living_df['Meal for 2 People, Mid-range Restaurant, Three-course (USD)'] = pd.to_numeric(cost_of_living_df['Meal for 2 People, Mid-range Restaurant, Three-course (USD)'], errors='coerce')
+# 4) Clean the country name column
+cost_of_living_df['Country_clean'] = cost_of_living_df["Country"].map(normalize_country).map(apply_alias)
+# 5) Add up all the cities and make averages for the country
+numeric_cols = [
+    'Price per Square Meter to Buy Apartment in City Centre (USD)',
+    'Fitness Club, Monthly Fee for 1 Adult (USD)',
+    'Internet (60 Mbps or More, Unlimited Data, Cable/ADSL) (USD)',
+    'Coke/Pepsi (0.33 liter bottle, in restaurants) (USD)',
+    'Meal for 2 People, Mid-range Restaurant, Three-course (USD)'
+]
+cost_of_living_country_df = (
+    cost_of_living_df
+    .dropna(subset=['Country_clean'])
+    .groupby('Country_clean', as_index=False)
+    .agg({col: 'median' for col in numeric_cols})
+)
+# 6) Merge the chosen columns into main research df
+happiness_df = fuzzy_merge(
+    happiness_df,
+    cost_of_living_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=numeric_cols,
+    threshold=85
+)
+
+# 14) GDP Per Capita
+# 1) Pick which columns to download
+gdp_per_capita_df = data['gdp_per_capita_df'][['Country ', '2018']]
+# 2) Rename the columns for clarity and to match main research df
+gdp_per_capita_df = gdp_per_capita_df.rename(columns={'Country ' : 'Country', '2018' : 'GDP Per Capita'})
+# 3) Transform numeric columns
+gdp_per_capita_df['GDP Per Capita'] = pd.to_numeric(gdp_per_capita_df['GDP Per Capita'], errors='coerce')
+# 4) Clean the country name column
+gdp_per_capita_df['Country_clean'] = gdp_per_capita_df["Country"].map(normalize_country).map(apply_alias)
+# 5) Merge the chosen columns into main research df
+happiness_df = fuzzy_merge(
+    happiness_df,
+    gdp_per_capita_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['GDP Per Capita'],
+    threshold=85
+)
+
+# 15) Military Expenditure
+# 1) Pick which columns to download
+military_exp_df = data['military_exp_df'][['Name', 'Type', '2018']]
+# 2) Rename the columns for clarity and to match main research df
+military_exp_df = military_exp_df.rename(columns={'Name' : 'Country', '2018' : 'Military Expenditure (USD/year)'})
+# 3) Transform numeric columns
+military_exp_df['Military Expenditure (USD/year)'] = pd.to_numeric(military_exp_df['Military Expenditure (USD/year)'], errors='coerce')
+# 4) Keep only rows where type = country
+military_exp_df = military_exp_df.loc[military_exp_df['Type'] == 'Country']
+# 5) Clean the country name column
+military_exp_df['Country_clean'] = military_exp_df["Country"].map(normalize_country).map(apply_alias)
+# 6) Merge the chosen columns into main research df
+happiness_df = fuzzy_merge(
+    happiness_df,
+    military_exp_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['Military Expenditure (USD/year)'],
+    threshold=85
+)
+
+# 16) Homicide Rate
+# 1) Pick which columns to download
+homicide_rate_df = data['homicide_rate_df'][['Location', 'Rate']]
+# 2) Rename the columns for clarity and to match main research df
+homicide_rate_df = homicide_rate_df.rename(columns={'Location' : 'Country', 'Rate' : 'Yearly Homicide Rate (% per 100,000 people)'})
+# 3) Transform numeric columns
+homicide_rate_df['Yearly Homicide Rate (% per 100,000 people)'] = pd.to_numeric(homicide_rate_df['Yearly Homicide Rate (% per 100,000 people)'], errors='coerce')
+# 4) Clean the country name column
+homicide_rate_df['Country_clean'] = homicide_rate_df["Country"].map(normalize_country).map(apply_alias)
+# 5) Merge the chosen columns into main research df
+happiness_df = fuzzy_merge(
+    happiness_df,
+    homicide_rate_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['Yearly Homicide Rate (% per 100,000 people)'],
+    threshold=85
+)
+
+# 17) Average Ages
+# 1) Pick which columns to download
+average_age_df = data['average_age_df'][['Country', '2020']]
+# 2) Rename the columns for clarity and to match main research df
+average_age_df = average_age_df.rename(columns={'2020' : 'Average Age'})
+# 3) Transform numeric columns
+average_age_df['Average Age'] = pd.to_numeric(average_age_df['Average Age'], errors='coerce')
+# 4) Clean the country name column
+average_age_df['Country_clean'] = average_age_df["Country"].map(normalize_country).map(apply_alias)
+# 5) Merge the chosen columns into main research df
+happiness_df = fuzzy_merge(
+    happiness_df,
+    average_age_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['Average Age'],
+    threshold=85
+)
+
+# 18) Inflation
+# 1) Pick which columns to download
+inflation_df = data['inflation_df'][['Countries', 'Inflation, 2022']]
+# 2) Rename the columns for clarity and to match main research df
+inflation_df = inflation_df.rename(columns={'Countries' : 'Country', 'Inflation, 2022' : 'Inflation Rate (year)', '' : '', '' : '', '' : ''})
+# 3) Transform numeric columns
+inflation_df['Inflation Rate (year)'] = pd.to_numeric(inflation_df['Inflation Rate (year)'], errors='coerce')
+# 4) Clean the country name column
+inflation_df['Country_clean'] = inflation_df["Country"].map(normalize_country).map(apply_alias)
+# 5) Merge the chosen columns into main research df
+happiness_df = fuzzy_merge(
+    happiness_df,
+    inflation_df,
+    left_on='Country_clean',
+    right_on='Country_clean',
+    right_cols=['Inflation Rate (year)'],
+    threshold=85
+)
+
 # use pandas to find which metrics correlate to happiness and which don't
 numeric_cols = happiness_df.select_dtypes(include='number') # Focus on numeric columns 
 corr_matrix = numeric_cols.corr() # Correlation matrix
@@ -373,7 +511,8 @@ plt.figure(figsize=(8,6))
 plt.barh(corr_sorted.index, corr_sorted.values, color=[colors[i] for i in corr_sorted.index])
 plt.xlabel("Strength of Correlation with Happiness (absolute)")
 plt.title("Which metrics affect Happiness most (color shows + / -)")
-plt.subplots_adjust(left=0.35)
+plt.yticks(fontsize=7.5)
+plt.subplots_adjust(left=0.43)
 plt.show()
 
 # exporting to json
