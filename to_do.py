@@ -5,7 +5,7 @@
 # [v] export effect coefficients as well
 # [v] finish adding the previous datasets 
 # [_] add more tables / metrics for more opportunities to find correlations:
-# Cost of living: ???
+# Cost of living: https://www.kaggle.com/datasets/mvieira101/global-cost-of-living
 # GDP per capita: https://www.kaggle.com/datasets/nitishabharathi/gdp-per-capita-all-countries
 # Military spending: https://www.kaggle.com/datasets/nitinsss/military-expenditure-of-countries-19602019
 # Homicide rate: https://www.kaggle.com/datasets/bilalwaseer/countries-by-intentional-homicide-rate
