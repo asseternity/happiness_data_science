@@ -14,8 +14,3 @@
 # [v] incorporate the tables
 # [v] add UNITS to column names
 # [v] compile a table of sources: ask LLM
-# [_] upload final table to WMLS
-# [_] show the final correlation graph in WMLS
-# [_] change WMLS colors
-# [_] show sources on WMLS
-# [_] post on kaggle
