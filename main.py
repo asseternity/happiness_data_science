@@ -147,17 +147,17 @@ happiness_df = fuzzy_merge(
 
 # 4) Netflix - simple
 netflix_isolated_df = data['netflix_data_df'][['Country', 'Cost Per Month - Standard ($)']]
-netflix_isolated_df = netflix_isolated_df.rename(columns={'Cost Per Month - Standard ($)': 'Netflix (USD/month)'})
+netflix_isolated_df = netflix_isolated_df.rename(columns={'Cost Per Month - Standard ($)': 'Netflix'})
 netflix_isolated_df = netflix_isolated_df.dropna().drop_duplicates()
 netflix_isolated_df['Country'] = netflix_isolated_df['Country'].str.strip()
-netflix_isolated_df['Netflix (USD/month)'] = pd.to_numeric(netflix_isolated_df['Netflix (USD/month)'], errors='coerce')
+netflix_isolated_df['Netflix'] = pd.to_numeric(netflix_isolated_df['Netflix'], errors='coerce')
 netflix_isolated_df["Country_clean"] = netflix_isolated_df["Country"].map(normalize_country).map(apply_alias)
 happiness_df = fuzzy_merge(
     happiness_df,
     netflix_isolated_df,
     left_on='Country_clean',
     right_on='Country_clean',
-    right_cols=['Netflix (USD/month)'],
+    right_cols=['Netflix'],
     threshold=85
 )
 
@@ -294,14 +294,14 @@ happiness_df = fuzzy_merge(
 
 # 10) Food Production - need to only grab rows with the latest year
 food_production_isolated_df = data['food_production_df'][['Entity', 'Year', 'Wheat Production (tonnes)', 'Rye  Production (tonnes)', 'Potatoes  Production (tonnes)', 'Meat, chicken  Production (tonnes)', 'Avocados Production (tonnes)']]
-food_production_isolated_df = food_production_isolated_df.rename(columns={'Entity' : 'Country', 'Rye  Production (tonnes)' : 'Rye Production (tonnes)', 'Meat, chicken  Production (tonnes)' : 'Meat, chicken Production (tonnes)', 'Potatoes  Production (tonnes)' : 'Potatoes Production (tonnes)'})
+food_production_isolated_df = food_production_isolated_df.rename(columns={'Entity' : 'Country', 'Wheat Production (tonnes)': 'Wheat Production', 'Rye  Production (tonnes)' : 'Rye Production', 'Meat, chicken  Production (tonnes)' : 'Meat, Chicken Production', 'Potatoes  Production (tonnes)' : 'Potatoes Production', 'Avocados Production (tonnes)' : 'Avocados Production'})
 food_production_isolated_df = food_production_isolated_df.dropna().drop_duplicates()
 food_production_isolated_df['Country'] = food_production_isolated_df['Country'].str.strip()
-food_production_isolated_df['Wheat Production (tonnes)'] = pd.to_numeric(food_production_isolated_df['Wheat Production (tonnes)'], errors='coerce')
-food_production_isolated_df['Rye Production (tonnes)'] = pd.to_numeric(food_production_isolated_df['Rye Production (tonnes)'], errors='coerce')
-food_production_isolated_df['Potatoes Production (tonnes)'] = pd.to_numeric(food_production_isolated_df['Potatoes Production (tonnes)'], errors='coerce')
-food_production_isolated_df['Meat, chicken Production (tonnes)'] = pd.to_numeric(food_production_isolated_df['Meat, chicken Production (tonnes)'], errors='coerce')
-food_production_isolated_df['Avocados Production (tonnes)'] = pd.to_numeric(food_production_isolated_df['Avocados Production (tonnes)'], errors='coerce')
+food_production_isolated_df['Wheat Production'] = pd.to_numeric(food_production_isolated_df['Wheat Production'], errors='coerce')
+food_production_isolated_df['Rye Production'] = pd.to_numeric(food_production_isolated_df['Rye Production'], errors='coerce')
+food_production_isolated_df['Potatoes Production'] = pd.to_numeric(food_production_isolated_df['Potatoes Production'], errors='coerce')
+food_production_isolated_df['Meat, Chicken Production'] = pd.to_numeric(food_production_isolated_df['Meat, Chicken Production'], errors='coerce')
+food_production_isolated_df['Avocados Production'] = pd.to_numeric(food_production_isolated_df['Avocados Production'], errors='coerce')
 food_production_isolated_df["Country_clean"] = food_production_isolated_df["Country"].map(normalize_country).map(apply_alias)
 food_production_isolated_df = food_production_isolated_df.sort_values(
     ["Country_clean", "Year"]
@@ -311,11 +311,11 @@ food_production_latest = (
     .groupby("Country_clean")
     .agg({
         "Year": "max",
-        "Wheat Production (tonnes)": "last",
-        "Rye Production (tonnes)": "last",
-        "Potatoes Production (tonnes)" : "last",
-        "Meat, chicken Production (tonnes)": "last",
-        "Avocados Production (tonnes)": "last",
+        "Wheat Production": "last",
+        "Rye Production": "last",
+        "Potatoes Production" : "last",
+        "Meat, Chicken Production": "last",
+        "Avocados Production": "last",
     })
     .reset_index()
 )
@@ -324,40 +324,40 @@ happiness_df = fuzzy_merge(
     food_production_latest,
     left_on='Country_clean',
     right_on='Country_clean',
-    right_cols=['Wheat Production (tonnes)', 'Rye Production (tonnes)', 'Potatoes Production (tonnes)', 'Meat, chicken Production (tonnes)', 'Avocados Production (tonnes)'],
+    right_cols=['Wheat Production', 'Rye Production', 'Potatoes Production', 'Meat, Chicken Production', 'Avocados Production'],
     threshold=85
 )
 
 # 11) Petrol Price (USD/liter) Petrol Prices - simple
 petrol_prices_isolated_df = data['petrol_prices_df'][['Country', 'Daily Oil Consumption (Barrels)', 'Price Per Liter (USD)']]
-petrol_prices_isolated_df = petrol_prices_isolated_df.rename(columns={'Price Per Liter (USD)' : 'Petrol Price (USD/liter)'})
+petrol_prices_isolated_df = petrol_prices_isolated_df.rename(columns={'Price Per Liter (USD)' : 'Petrol Price', 'Daily Oil Consumption (Barrels)': 'Daily Oil Consumption'})
 petrol_prices_isolated_df = petrol_prices_isolated_df.dropna().drop_duplicates()
 petrol_prices_isolated_df['Country'] = petrol_prices_isolated_df['Country'].str.strip()
-petrol_prices_isolated_df['Daily Oil Consumption (Barrels)'] = pd.to_numeric(petrol_prices_isolated_df['Daily Oil Consumption (Barrels)'], errors='coerce')
-petrol_prices_isolated_df['Petrol Price (USD/liter)'] = pd.to_numeric(petrol_prices_isolated_df['Petrol Price (USD/liter)'], errors='coerce')
+petrol_prices_isolated_df['Daily Oil Consumption'] = pd.to_numeric(petrol_prices_isolated_df['Daily Oil Consumption'], errors='coerce')
+petrol_prices_isolated_df['Petrol Price'] = pd.to_numeric(petrol_prices_isolated_df['Petrol Price'], errors='coerce')
 petrol_prices_isolated_df["Country_clean"] = petrol_prices_isolated_df["Country"].map(normalize_country).map(apply_alias)
 happiness_df = fuzzy_merge(
     happiness_df,
     petrol_prices_isolated_df,
     left_on='Country_clean',
     right_on='Country_clean',
-    right_cols=['Petrol Price (USD/liter)', 'Daily Oil Consumption (Barrels)'],
+    right_cols=['Petrol Price', 'Daily Oil Consumption'],
     threshold=85
 )
 
 # 12) CO2 Emissions - simple
 co2_emissions_isolated_df = data['co2_emissions_df'][['Country Name', '2019']]
-co2_emissions_isolated_df = co2_emissions_isolated_df.rename(columns={'Country Name': 'Country', '2019' : 'CO2 Emissions (ton per capita)'})
+co2_emissions_isolated_df = co2_emissions_isolated_df.rename(columns={'Country Name': 'Country', '2019' : 'CO2 Emissions'})
 co2_emissions_isolated_df = co2_emissions_isolated_df.dropna().drop_duplicates()
 co2_emissions_isolated_df['Country'] = co2_emissions_isolated_df['Country'].str.strip()
-co2_emissions_isolated_df['CO2 Emissions (ton per capita)'] = pd.to_numeric(co2_emissions_isolated_df['CO2 Emissions (ton per capita)'], errors='coerce')
+co2_emissions_isolated_df['CO2 Emissions'] = pd.to_numeric(co2_emissions_isolated_df['CO2 Emissions'], errors='coerce')
 co2_emissions_isolated_df["Country_clean"] = co2_emissions_isolated_df["Country"].map(normalize_country).map(apply_alias)
 happiness_df = fuzzy_merge(
     happiness_df,
     co2_emissions_isolated_df,
     left_on='Country_clean',
     right_on='Country_clean',
-    right_cols=['CO2 Emissions (ton per capita)'],
+    right_cols=['CO2 Emissions'],
     threshold=85
 )
 
@@ -366,27 +366,27 @@ happiness_df = fuzzy_merge(
 cost_of_living_df = data['cost_of_living_df'][['city', 'country', 'x52', 'x39', 'x38', 'x7', 'x2']]
 # 2) Rename the columns for clarity and to match main research df
 cost_of_living_column_dict = {'country' : 'Country', 
-                              'x52' : 'Price per Square Meter to Buy Apartment in City Centre (USD)', 
-                              'x39' : 'Fitness Club, Monthly Fee for 1 Adult (USD)', 
-                              'x38' : 'Internet (60 Mbps or More, Unlimited Data, Cable/ADSL) (USD)', 
-                              'x7' : 'Coke/Pepsi (0.33 liter bottle, in restaurants) (USD)', 
-                              'x2' : 'Meal for 2 People, Mid-range Restaurant, Three-course (USD)'}
+                              'x52' : 'Price per Square Meter to Buy Apartment in City Centre', 
+                              'x39' : 'Fitness Club, Monthly Fee for 1 Adult', 
+                              'x38' : 'Internet (60 Mbps or More, Unlimited Data, Cable/ADSL)', 
+                              'x7' : 'Coke/Pepsi (0.33 liter bottle, in restaurants)', 
+                              'x2' : 'Meal for 2 People, Mid-range Restaurant, Three-course'}
 cost_of_living_df = cost_of_living_df.rename(columns=cost_of_living_column_dict)
 # 3) Transform numeric columns
-cost_of_living_df['Price per Square Meter to Buy Apartment in City Centre (USD)'] = pd.to_numeric(cost_of_living_df['Price per Square Meter to Buy Apartment in City Centre (USD)'], errors='coerce')
-cost_of_living_df['Fitness Club, Monthly Fee for 1 Adult (USD)'] = pd.to_numeric(cost_of_living_df['Fitness Club, Monthly Fee for 1 Adult (USD)'], errors='coerce')
-cost_of_living_df['Internet (60 Mbps or More, Unlimited Data, Cable/ADSL) (USD)'] = pd.to_numeric(cost_of_living_df['Internet (60 Mbps or More, Unlimited Data, Cable/ADSL) (USD)'], errors='coerce')
-cost_of_living_df['Coke/Pepsi (0.33 liter bottle, in restaurants) (USD)'] = pd.to_numeric(cost_of_living_df['Coke/Pepsi (0.33 liter bottle, in restaurants) (USD)'], errors='coerce')
-cost_of_living_df['Meal for 2 People, Mid-range Restaurant, Three-course (USD)'] = pd.to_numeric(cost_of_living_df['Meal for 2 People, Mid-range Restaurant, Three-course (USD)'], errors='coerce')
+cost_of_living_df['Price per Square Meter to Buy Apartment in City Centre'] = pd.to_numeric(cost_of_living_df['Price per Square Meter to Buy Apartment in City Centre'], errors='coerce')
+cost_of_living_df['Fitness Club, Monthly Fee for 1 Adult'] = pd.to_numeric(cost_of_living_df['Fitness Club, Monthly Fee for 1 Adult'], errors='coerce')
+cost_of_living_df['Internet (60 Mbps or More, Unlimited Data, Cable/ADSL)'] = pd.to_numeric(cost_of_living_df['Internet (60 Mbps or More, Unlimited Data, Cable/ADSL)'], errors='coerce')
+cost_of_living_df['Coke/Pepsi (0.33 liter bottle, in restaurants)'] = pd.to_numeric(cost_of_living_df['Coke/Pepsi (0.33 liter bottle, in restaurants)'], errors='coerce')
+cost_of_living_df['Meal for 2 People, Mid-range Restaurant, Three-course'] = pd.to_numeric(cost_of_living_df['Meal for 2 People, Mid-range Restaurant, Three-course'], errors='coerce')
 # 4) Clean the country name column
 cost_of_living_df['Country_clean'] = cost_of_living_df["Country"].map(normalize_country).map(apply_alias)
 # 5) Add up all the cities and make averages for the country
 numeric_cols = [
-    'Price per Square Meter to Buy Apartment in City Centre (USD)',
-    'Fitness Club, Monthly Fee for 1 Adult (USD)',
-    'Internet (60 Mbps or More, Unlimited Data, Cable/ADSL) (USD)',
-    'Coke/Pepsi (0.33 liter bottle, in restaurants) (USD)',
-    'Meal for 2 People, Mid-range Restaurant, Three-course (USD)'
+    'Price per Square Meter to Buy Apartment in City Centre',
+    'Fitness Club, Monthly Fee for 1 Adult',
+    'Internet (60 Mbps or More, Unlimited Data, Cable/ADSL)',
+    'Coke/Pepsi (0.33 liter bottle, in restaurants)',
+    'Meal for 2 People, Mid-range Restaurant, Three-course'
 ]
 cost_of_living_country_df = (
     cost_of_living_df
@@ -427,9 +427,9 @@ happiness_df = fuzzy_merge(
 # 1) Pick which columns to download
 military_exp_df = data['military_exp_df'][['Name', 'Type', '2018']]
 # 2) Rename the columns for clarity and to match main research df
-military_exp_df = military_exp_df.rename(columns={'Name' : 'Country', '2018' : 'Military Expenditure (USD/year)'})
+military_exp_df = military_exp_df.rename(columns={'Name' : 'Country', '2018' : 'Military Expenditure'})
 # 3) Transform numeric columns
-military_exp_df['Military Expenditure (USD/year)'] = pd.to_numeric(military_exp_df['Military Expenditure (USD/year)'], errors='coerce')
+military_exp_df['Military Expenditure'] = pd.to_numeric(military_exp_df['Military Expenditure'], errors='coerce')
 # 4) Keep only rows where type = country
 military_exp_df = military_exp_df.loc[military_exp_df['Type'] == 'Country']
 # 5) Clean the country name column
@@ -440,7 +440,7 @@ happiness_df = fuzzy_merge(
     military_exp_df,
     left_on='Country_clean',
     right_on='Country_clean',
-    right_cols=['Military Expenditure (USD/year)'],
+    right_cols=['Military Expenditure'],
     threshold=85
 )
 
@@ -486,9 +486,9 @@ happiness_df = fuzzy_merge(
 # 1) Pick which columns to download
 inflation_df = data['inflation_df'][['Countries', 'Inflation, 2022']]
 # 2) Rename the columns for clarity and to match main research df
-inflation_df = inflation_df.rename(columns={'Countries' : 'Country', 'Inflation, 2022' : 'Inflation Rate (year)', '' : '', '' : '', '' : ''})
+inflation_df = inflation_df.rename(columns={'Countries' : 'Country', 'Inflation, 2022' : 'Inflation Rate', '' : '', '' : '', '' : ''})
 # 3) Transform numeric columns
-inflation_df['Inflation Rate (year)'] = pd.to_numeric(inflation_df['Inflation Rate (year)'], errors='coerce')
+inflation_df['Inflation Rate'] = pd.to_numeric(inflation_df['Inflation Rate'], errors='coerce')
 # 4) Clean the country name column
 inflation_df['Country_clean'] = inflation_df["Country"].map(normalize_country).map(apply_alias)
 # 5) Merge the chosen columns into main research df
@@ -497,14 +497,18 @@ happiness_df = fuzzy_merge(
     inflation_df,
     left_on='Country_clean',
     right_on='Country_clean',
-    right_cols=['Inflation Rate (year)'],
+    right_cols=['Inflation Rate'],
     threshold=85
 )
+
+# add units of measurement
+from add_units import add_units_to_happiness_df
+happiness_df = add_units_to_happiness_df(happiness_df)
 
 # use pandas to find which metrics correlate to happiness and which don't
 numeric_cols = happiness_df.select_dtypes(include='number') # Focus on numeric columns 
 corr_matrix = numeric_cols.corr() # Correlation matrix
-corr_with_happiness = corr_matrix['Happiness'].drop('Happiness') # Remove the target
+corr_with_happiness = corr_matrix['Happiness (score 0-10)'].drop('Happiness (score 0-10)') # Remove the target
 colors = corr_with_happiness.apply(lambda x: 'blue' if x>0 else 'red').sort_values(ascending=False) # Differentiate positive and negative correlation
 corr_sorted = corr_with_happiness.abs().sort_values(ascending=False) # Take absolute value
 plt.figure(figsize=(8,6))
@@ -528,7 +532,7 @@ def export_as_json():
     if not os.path.exists(json_path_corr):
         # compute signed correlations and export both signed and absolute weights
         numeric_cols = happiness_df.select_dtypes(include='number')
-        corr_with_happiness = numeric_cols.corr()['Happiness'].drop('Happiness')
+        corr_with_happiness = numeric_cols.corr()['Happiness (score 0-10)'].drop('Happiness (score 0-10)')
 
         # DataFrame with signed weight and absolute magnitude
         corr_df = pd.DataFrame({

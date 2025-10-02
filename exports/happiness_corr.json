@@ -1,111 +1,111 @@
 [
   {
-    "metric":"Median Salary",
+    "metric":"Median Salary (USD\/year)",
     "weight_signed":0.6558076975,
     "weight_magnitude":0.6558076975
   },
   {
-    "metric":"Average Salary",
+    "metric":"Average Salary (USD\/year)",
     "weight_signed":0.6523718342,
     "weight_magnitude":0.6523718342
   },
   {
-    "metric":"Lowest Salary",
+    "metric":"Lowest Salary (USD\/year)",
     "weight_signed":0.6485308062,
     "weight_magnitude":0.6485308062
   },
   {
-    "metric":"Highest Salary",
+    "metric":"Highest Salary (USD\/year)",
     "weight_signed":0.652181275,
     "weight_magnitude":0.652181275
   },
   {
-    "metric":"IQAir_AQI",
+    "metric":"IQAir_AQI (AQI index)",
     "weight_signed":-0.473119728,
     "weight_magnitude":0.473119728
   },
   {
-    "metric":"Infant Survival Rate",
+    "metric":"Infant Survival Rate (per 1000 births)",
     "weight_signed":0.2322032702,
     "weight_magnitude":0.2322032702
   },
   {
-    "metric":"Alcohol Consumption Rate",
+    "metric":"Alcohol Consumption Rate (liters per capita per year)",
     "weight_signed":0.5697201294,
     "weight_magnitude":0.5697201294
   },
   {
-    "metric":"Life Expectancy",
+    "metric":"Life Expectancy (years)",
     "weight_signed":0.7416090513,
     "weight_magnitude":0.7416090513
   },
   {
-    "metric":"Netflix (USD\/month)",
+    "metric":"Netflix",
     "weight_signed":0.68233766,
     "weight_magnitude":0.68233766
   },
   {
-    "metric":"Women Safety Index",
+    "metric":"Women Safety Index (score 0-1)",
     "weight_signed":0.7713289613,
     "weight_magnitude":0.7713289613
   },
   {
-    "metric":"Average Winter Temperature",
+    "metric":"Average Winter Temperature (\u00b0C)",
     "weight_signed":-0.4293739779,
     "weight_magnitude":0.4293739779
   },
   {
-    "metric":"Average Summer Temperature",
+    "metric":"Average Summer Temperature (\u00b0C)",
     "weight_signed":-0.4283984286,
     "weight_magnitude":0.4283984286
   },
   {
-    "metric":"Population",
+    "metric":"Population (people)",
     "weight_signed":-0.0219677181,
     "weight_magnitude":0.0219677181
   },
   {
-    "metric":"Energy Per Capita",
+    "metric":"Energy Per Capita (kWh per capita)",
     "weight_signed":0.5801967755,
     "weight_magnitude":0.5801967755
   },
   {
-    "metric":"% of Power from Fossil Fuels",
+    "metric":"% of Power from Fossil Fuels (%)",
     "weight_signed":-0.1362477334,
     "weight_magnitude":0.1362477334
   },
   {
-    "metric":"% of Power from Nuclear",
+    "metric":"% of Power from Nuclear (%)",
     "weight_signed":0.2760217511,
     "weight_magnitude":0.2760217511
   },
   {
-    "metric":"% of Power from Renewables",
+    "metric":"% of Power from Renewables (%)",
     "weight_signed":0.0225333231,
     "weight_magnitude":0.0225333231
   },
   {
-    "metric":"% of Agricultural Land",
+    "metric":"% of Agricultural Land (%)",
     "weight_signed":-0.2509434126,
     "weight_magnitude":0.2509434126
   },
   {
-    "metric":"% of Forest Land",
+    "metric":"% of Forest Land (%)",
     "weight_signed":0.1552674975,
     "weight_magnitude":0.1552674975
   },
   {
-    "metric":"Territory",
+    "metric":"Territory (sq km)",
     "weight_signed":0.1241759612,
     "weight_magnitude":0.1241759612
   },
   {
-    "metric":"Average Rainfall",
+    "metric":"Average Rainfall (mm\/year)",
     "weight_signed":0.0560770183,
     "weight_magnitude":0.0560770183
   },
   {
-    "metric":"Corruption",
+    "metric":"Corruption (std score)",
     "weight_signed":0.0494015891,
     "weight_magnitude":0.0494015891
   },
@@ -125,7 +125,7 @@
     "weight_magnitude":0.1034607974
   },
   {
-    "metric":"Meat, chicken Production (tonnes)",
+    "metric":"Meat, Chicken Production (tonnes)",
     "weight_signed":0.0025616182,
     "weight_magnitude":0.0025616182
   },
@@ -140,42 +140,42 @@
     "weight_magnitude":0.4486226673
   },
   {
-    "metric":"Daily Oil Consumption (Barrels)",
+    "metric":"Daily Oil Consumption (barrels\/day)",
     "weight_signed":0.1522584044,
     "weight_magnitude":0.1522584044
   },
   {
-    "metric":"CO2 Emissions (ton per capita)",
+    "metric":"CO2 Emissions (tonnes per capita)",
     "weight_signed":0.5727786876,
     "weight_magnitude":0.5727786876
   },
   {
-    "metric":"Price per Square Meter to Buy Apartment in City Centre (USD)",
+    "metric":"Price per Square Meter to Buy Apartment in City Centre (USD\/sqm)",
     "weight_signed":0.0116504384,
     "weight_magnitude":0.0116504384
   },
   {
-    "metric":"Fitness Club, Monthly Fee for 1 Adult (USD)",
+    "metric":"Fitness Club, Monthly Fee for 1 Adult (USD\/month)",
     "weight_signed":0.1494452699,
     "weight_magnitude":0.1494452699
   },
   {
-    "metric":"Internet (60 Mbps or More, Unlimited Data, Cable\/ADSL) (USD)",
+    "metric":"Internet (60 Mbps or More, Unlimited Data, Cable\/ADSL) (USD\/month)",
     "weight_signed":-0.3850210632,
     "weight_magnitude":0.3850210632
   },
   {
-    "metric":"Coke\/Pepsi (0.33 liter bottle, in restaurants) (USD)",
+    "metric":"Coke\/Pepsi (0.33 liter bottle, in restaurants) (USD\/bottle)",
     "weight_signed":0.4883880713,
     "weight_magnitude":0.4883880713
   },
   {
-    "metric":"Meal for 2 People, Mid-range Restaurant, Three-course (USD)",
+    "metric":"Meal for 2 People, Mid-range Restaurant, Three-course (USD\/meal)",
     "weight_signed":0.6293410799,
     "weight_magnitude":0.6293410799
   },
   {
-    "metric":"GDP Per Capita",
+    "metric":"GDP Per Capita (USD\/year)",
     "weight_signed":0.6913383494,
     "weight_magnitude":0.6913383494
   },
@@ -185,17 +185,17 @@
     "weight_magnitude":0.1428679802
   },
   {
-    "metric":"Yearly Homicide Rate (% per 100,000 people)",
+    "metric":"Yearly Homicide Rate (% per 100,000 people) (per 100,000 people)",
     "weight_signed":-0.1431878775,
     "weight_magnitude":0.1431878775
   },
   {
-    "metric":"Average Age",
+    "metric":"Average Age (years)",
     "weight_signed":0.7032851312,
     "weight_magnitude":0.7032851312
   },
   {
-    "metric":"Inflation Rate (year)",
+    "metric":"Inflation Rate (year, %)",
     "weight_signed":-0.2963979455,
     "weight_magnitude":0.2963979455
   }
